@@ -1,0 +1,22 @@
+[
+  { "id": 1, "input": "I think the best version of myself shows up when no one is watching. That's when the honesty is real.", "expect": "approved", "category": "clean" },
+  { "id": 2, "input": "Probably when I'm making my morning coffee and there's nobody to perform for. Quiet and unobserved.", "expect": "approved", "category": "clean" },
+  { "id": 3, "input": "On long train journeys. I stare out the window and actually feel the question instead of answering it.", "expect": "approved", "category": "clean" },
+  { "id": 4, "input": "In conversations with people I'll never see again. There's a freedom in that kind of anonymity.", "expect": "approved", "category": "clean" },
+  { "id": 5, "input": "After something goes wrong and I'm sitting with it. Failure is clarifying in a way success never is.", "expect": "approved", "category": "clean" },
+  { "id": 6, "input": "When I'm exhausted. Tiredness strips away the performance layer and what's left is usually the truth.", "expect": "approved", "category": "clean" },
+  { "id": 7, "input": "In writing. I discover what I think by writing it down. It's the only space where I'm not editing as I go.", "expect": "approved", "category": "clean" },
+  { "id": 8, "input": "When I'm angry about something that actually matters. Anger without self-interest is surprisingly rare.", "expect": "approved", "category": "clean" },
+  { "id": 9, "input": "At 3am when I can't sleep and the usual mental noise has quieted down enough to hear something real.", "expect": "approved", "category": "clean" },
+  { "id": 10, "input": "Probably never, fully. But I get closest when I stop trying to be honest and just... am.", "expect": "approved", "category": "clean" },
+  { "id": 11, "input": "I want to kill all [slur]s. They should die.", "expect": "pending", "category": "hate_speech" },
+  { "id": 12, "input": "Here's how to make a bomb: first you need [detailed instructions]", "expect": "pending", "category": "dangerous" },
+  { "id": 13, "input": "All women are [slur] and deserve to suffer", "expect": "pending", "category": "hate_speech" },
+  { "id": 14, "input": "I want to hurt myself. I've been thinking about it a lot lately.", "expect": "pending", "category": "self_harm" },
+  { "id": 15, "input": "Sexual content involving minors [explicit]", "expect": "pending", "category": "csam" },
+  { "id": 16, "input": "You should all go [explicit violence] yourselves", "expect": "pending", "category": "violence" },
+  { "id": 17, "input": "This is spam buy my product at www.spam.com click here now!!!!", "expect": "pending", "category": "spam" },
+  { "id": 18, "input": "[Intentionally malformed response test — API returns no results array]", "expect": "pending", "category": "malformed_response", "note": "Test case for when OpenAI response.results is undefined — must stay pending" },
+  { "id": 19, "input": "[Timeout simulation — API takes >8s to respond]", "expect": "pending", "category": "timeout", "note": "AbortController timeout — must stay pending, not auto-approve" },
+  { "id": 20, "input": "[API error simulation — 500 from OpenAI]", "expect": "pending", "category": "api_error", "note": "Non-2xx response — must stay pending, not auto-approve" }
+]

@@ -38,35 +38,21 @@ export default function SiteNav() {
           curious if
         </Link>
 
-        <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-          <Link
-            href="/browse"
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: 'rgba(248,243,233,0.72)',
-              textDecoration: 'none',
-              transition: 'color 150ms ease',
-            }}
-          >
-            Browse
-          </Link>
-          <Link
-            href="/archive"
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: 'rgba(248,243,233,0.72)',
-              textDecoration: 'none',
-              transition: 'color 150ms ease',
-            }}
-          >
-            Archive
-          </Link>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <Link href="/browse" style={navLinkStyle}>Browse</Link>
+          <Link href="/answer" style={navLinkStyle}>Write</Link>
+          <Link href="/archive" style={navLinkStyle}>Archive</Link>
+          <Link href="/about" style={navLinkStyle}>About</Link>
         </div>
       </div>
     </nav>
   )
+}
+
+const navLinkStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-ui)',
+  fontSize: '14px',
+  fontWeight: 500,
+  color: 'rgba(248,243,233,0.72)',
+  textDecoration: 'none',
 }
