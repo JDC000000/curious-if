@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface CueCardProps {
   answer: string
@@ -10,6 +10,7 @@ interface CueCardProps {
   accentColour: string
   questionLabel: string
   answerId?: string
+  initialResonanceCount?: number
 }
 
 export default function CueCard({
@@ -20,14 +21,104 @@ export default function CueCard({
   accentColour,
   questionLabel,
   answerId,
+  initialResonanceCount = 0,
 }: CueCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [resonated, setResonated] = useState(false)
+  const [resonanceCount, setResonanceCount] = useState(initialResonanceCount)
+
+  // Restore resonance state from localStorage on mount
+  useEffect(() => {
+    if (!answerId) return
+    try {
+      const stored = localStorage.getItem(`resonated_${answerId}`)
+      if (stored === '1') setResonated(true)
+    } catch {
+      // localStorage unavailable (private browsing etc.) — fine
+    }
+  }, [answerId])
 
   const handleResonance = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setResonated(r => !r)
+    if (!answerId) return
+
+    const next = !resonated
+    setResonated(next)
+    setResonanceCount(c => Math.max(0, c + (next ? 1 : -1)))
+
+    // Persist to localStorage
+    try {
+      if (next) {
+        localStorage.setItem(`resonated_${answerId}`, '1')
+      } else {
+        localStorage.removeItem(`resonated_${answerId}`)
+      }
+    } catch {
+      // Ignore
+    }
+
+    // Fire-and-forget to API
+    fetch('/api/resonance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answerId, action: next ? 'add' : 'remove' }),
+    }).catch(() => {
+      // Non-fatal — revert state on failure
+      setResonated(!next)
+      setResonanceCount(c => Math.max(0, c + (next ? -1 : 1)))
+    })
   }
+
+  const resonanceButton = (
+    <button
+      onClick={handleResonance}
+      aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        background: 'none',
+        border: 'none',
+        cursor: answerId ? 'pointer' : 'default',
+        color: resonated ? accentColour : '#9A9A9A',
+        transition: 'color 150ms ease',
+        padding: '4px',
+        lineHeight: 1,
+      }}
+    >
+      <span style={{ fontSize: '18px' }}>{resonated ? '◆' : '◇'}</span>
+      {resonanceCount > 0 && (
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.02em',
+          }}
+        >
+          {resonanceCount}
+        </span>
+      )}
+    </button>
+  )
+
+  const authorBlock = (
+    <div>
+      {author && (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: '#3D3D3D' }}>
+          {author}
+        </div>
+      )}
+      {city && (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#6B6B6B' }}>
+          {city}
+        </div>
+      )}
+      {!author && !city && (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#9A9A9A' }}>Anonymous</div>
+      )}
+    </div>
+  )
 
   return (
     <div
@@ -73,12 +164,9 @@ export default function CueCard({
           }}
           className={!isFlipped ? 'card-front-hover' : ''}
         >
-          {/* Accent stripe */}
           <div style={{ height: '5px', backgroundColor: accentColour, flexShrink: 0 }} />
 
-          {/* Content */}
           <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            {/* Question label */}
             <div
               style={{
                 fontFamily: 'var(--font-mono, "IBM Plex Mono", monospace)',
@@ -93,7 +181,6 @@ export default function CueCard({
               {questionLabel}
             </div>
 
-            {/* Answer preview (clamped) */}
             <p
               style={{
                 fontFamily: 'var(--font-serif, Fraunces, serif)',
@@ -111,42 +198,11 @@ export default function CueCard({
               {answer}
             </p>
 
-            {/* Footer */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              <div>
-                {author && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: '#3D3D3D' }}>
-                    {author}
-                  </div>
-                )}
-                {city && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#6B6B6B' }}>
-                    {city}
-                  </div>
-                )}
-                {!author && !city && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#9A9A9A' }}>Anonymous</div>
-                )}
-              </div>
-              <button
-                onClick={handleResonance}
-                aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  color: resonated ? accentColour : '#9A9A9A',
-                  transition: 'color 150ms ease',
-                  padding: '4px',
-                  lineHeight: 1,
-                }}
-              >
-                {resonated ? '◆' : '◇'}
-              </button>
+              {authorBlock}
+              {resonanceButton}
             </div>
 
-            {/* Tap hint */}
             <div style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '10px',
@@ -176,11 +232,9 @@ export default function CueCard({
             flexDirection: 'column',
           }}
         >
-          {/* Accent stripe */}
           <div style={{ height: '5px', backgroundColor: accentColour, flexShrink: 0 }} />
 
           <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            {/* Month label */}
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
@@ -195,7 +249,6 @@ export default function CueCard({
               {month}
             </div>
 
-            {/* Full answer (no clamp) */}
             <p
               style={{
                 fontFamily: 'var(--font-serif)',
@@ -210,39 +263,9 @@ export default function CueCard({
               {answer}
             </p>
 
-            {/* Footer */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              <div>
-                {author && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: '#3D3D3D' }}>
-                    {author}
-                  </div>
-                )}
-                {city && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#6B6B6B' }}>
-                    {city}
-                  </div>
-                )}
-                {!author && !city && (
-                  <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#9A9A9A' }}>Anonymous</div>
-                )}
-              </div>
-              <button
-                onClick={handleResonance}
-                aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  color: resonated ? accentColour : '#9A9A9A',
-                  transition: 'color 150ms ease',
-                  padding: '4px',
-                  lineHeight: 1,
-                }}
-              >
-                {resonated ? '◆' : '◇'}
-              </button>
+              {authorBlock}
+              {resonanceButton}
             </div>
           </div>
         </div>

@@ -178,6 +178,7 @@ function AnswerCard({
         accentColour={accentColour}
         questionLabel={questionLabel}
         answerId={answer.id}
+        initialResonanceCount={(answer as Answer & { resonance_count?: number }).resonance_count ?? 0}
       />
       <style>{`
         @keyframes cardEnter {
