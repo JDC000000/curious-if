@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function addToResendContacts(email: string, name?: string) {
-  if (!process.env.RESEND_API_KEY) return
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return
 
   try {
     await fetch('https://api.resend.com/contacts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -21,26 +19,36 @@ async function addToResendContacts(email: string, name?: string) {
       }),
     })
   } catch (err) {
-    // Non-fatal — subscriber is in Supabase even if Resend fails
     console.warn('Resend Contacts API failed:', err)
   }
 }
 
 async function sendWelcomeEmail(email: string, name?: string) {
-  if (!process.env.RESEND_API_KEY) return
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return
 
   const firstName = name?.split(' ')[0] ?? null
 
   try {
-    await resend.emails.send({
-      from: 'curious if <hello@curiousif.blog>',
-      to: email,
-      subject: "you're in.",
-      html: welcomeEmailHtml(firstName),
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'curious if <hello@curiousif.blog>',
+        to: email,
+        subject: "you're in.",
+        html: welcomeEmailHtml(firstName),
+      }),
     })
+    if (!res.ok) {
+      const err = await res.text()
+      console.warn('Welcome email failed:', res.status, err)
+    }
   } catch (err) {
-    // Non-fatal — don't fail the subscription if email fails
-    console.warn('Welcome email failed:', err)
+    console.warn('Welcome email fetch failed:', err)
   }
 }
 
