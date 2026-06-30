@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Fraunces, Hanken_Grotesk, IBM_Plex_Mono } from 'next/font/google'
 import Script from 'next/script'
+import SiteFooter from '@/components/SiteFooter'
 import './globals.css'
 
 const fraunces = Fraunces({
@@ -57,6 +58,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#F8F3E9] text-[#1A1A1A]">
         {children}
+        <SiteFooter />
       </body>
     </html>
   )
