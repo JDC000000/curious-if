@@ -28,6 +28,7 @@ async function sendWelcomeEmail(email: string, name?: string) {
   if (!apiKey) return
 
   const firstName = name?.split(' ')[0] ?? null
+  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(email)}`
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -38,9 +39,15 @@ async function sendWelcomeEmail(email: string, name?: string) {
       },
       body: JSON.stringify({
         from: 'curious if <hello@curiousif.blog>',
+        reply_to: 'hello@curiousif.blog',
         to: email,
-        subject: "you're in.",
-        html: welcomeEmailHtml(firstName),
+        subject: "You're in — curious if",
+        text: welcomeEmailText(firstName, unsubscribeUrl),
+        html: welcomeEmailHtml(firstName, unsubscribeUrl),
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>, <mailto:hello@curiousif.blog?subject=unsubscribe>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
       }),
     })
     if (!res.ok) {
@@ -52,7 +59,24 @@ async function sendWelcomeEmail(email: string, name?: string) {
   }
 }
 
-function welcomeEmailHtml(firstName: string | null): string {
+function welcomeEmailText(firstName: string | null, unsubscribeUrl: string): string {
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
+  return `${greeting}
+
+You answered a question. That already says something.
+
+Once a month, one question arrives here — no noise, no algorithm, nothing else. Just something worth sitting with for a while.
+
+You'll hear from us when the next one lands.
+
+Browse answers: https://curiousif.blog/browse
+
+—
+curious if · curiousif.blog
+To unsubscribe: ${unsubscribeUrl}`
+}
+
+function welcomeEmailHtml(firstName: string | null, unsubscribeUrl: string): string {
   const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
 
   return `<!DOCTYPE html>
@@ -120,7 +144,7 @@ function welcomeEmailHtml(firstName: string | null): string {
                 You're receiving this because you subscribed at
                 <a href="https://curiousif.blog" style="color:#9A9A9A;">curiousif.blog</a>.
                 <br />
-                To unsubscribe, reply with "unsubscribe" and we'll remove you.
+                <a href="${unsubscribeUrl}" style="color:#9A9A9A;">Unsubscribe</a>
               </p>
             </td>
           </tr>
