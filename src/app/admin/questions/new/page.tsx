@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { ACCENTS } from '@/lib/palette'
 
@@ -23,25 +22,26 @@ export default function NewQuestionPage() {
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { data, error: saveError } = await supabase
-      .from('questions')
-      .insert({
+    const res = await fetch('/api/admin/questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
         text: text.trim(),
         whisper_line: whisperLine.trim() || null,
         accent_colour: accentColour,
         status: 'draft',
-      })
-      .select('id')
-      .single()
+      }),
+    })
 
-    if (saveError || !data) {
-      setError(saveError?.message ?? 'Failed to save draft')
+    const json = await res.json()
+
+    if (!res.ok) {
+      setError(json.error ?? 'Failed to save draft')
       setLoading(false)
       return
     }
 
-    setSavedId(data.id)
+    setSavedId(json.id)
     setLoading(false)
   }
 
