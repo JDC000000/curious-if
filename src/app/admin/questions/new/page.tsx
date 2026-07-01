@@ -1,18 +1,40 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ACCENTS } from '@/lib/palette'
+import { Suspense } from 'react'
 
-export default function NewQuestionPage() {
+function NewQuestionForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const editId = searchParams.get('edit')
+  const isEdit = !!editId
+
   const [text, setText] = useState('')
   const [whisperLine, setWhisperLine] = useState('')
-  const [accentColour, setAccentColour] = useState(ACCENTS[5].hex) // Indigo default
+  const [accentColour, setAccentColour] = useState(ACCENTS[5].hex)
   const [loading, setLoading] = useState(false)
+  const [loadingEdit, setLoadingEdit] = useState(isEdit)
   const [publishing, setPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [savedId, setSavedId] = useState<string | null>(null)
+  const [savedId, setSavedId] = useState<string | null>(isEdit ? editId : null)
+  const [saved, setSaved] = useState(false)
+
+  // Load existing draft when in edit mode
+  useEffect(() => {
+    if (!editId) return
+    setLoadingEdit(true)
+    fetch(`/api/admin/questions?id=${editId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.text) setText(data.text)
+        if (data.whisper_line) setWhisperLine(data.whisper_line)
+        if (data.accent_colour) setAccentColour(data.accent_colour)
+      })
+      .catch(() => setError('Failed to load question'))
+      .finally(() => setLoadingEdit(false))
+  }, [editId])
 
   const saveDraft = async () => {
     if (!text.trim()) {
@@ -21,16 +43,17 @@ export default function NewQuestionPage() {
     }
     setLoading(true)
     setError(null)
+    setSaved(false)
+
+    const method = isEdit ? 'PATCH' : 'POST'
+    const body = isEdit
+      ? { id: editId, text: text.trim(), whisper_line: whisperLine.trim() || null, accent_colour: accentColour }
+      : { text: text.trim(), whisper_line: whisperLine.trim() || null, accent_colour: accentColour, status: 'draft' }
 
     const res = await fetch('/api/admin/questions', {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: text.trim(),
-        whisper_line: whisperLine.trim() || null,
-        accent_colour: accentColour,
-        status: 'draft',
-      }),
+      body: JSON.stringify(body),
     })
 
     const json = await res.json()
@@ -41,12 +64,14 @@ export default function NewQuestionPage() {
       return
     }
 
-    setSavedId(json.id)
+    if (!isEdit) setSavedId(json.id)
+    setSaved(true)
     setLoading(false)
   }
 
   const publish = async () => {
-    if (!savedId) {
+    const id = savedId ?? editId
+    if (!id) {
       setError('Save as draft first')
       return
     }
@@ -56,7 +81,7 @@ export default function NewQuestionPage() {
     const res = await fetch('/api/admin/questions/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questionId: savedId }),
+      body: JSON.stringify({ questionId: id }),
     })
 
     const json = await res.json()
@@ -67,7 +92,15 @@ export default function NewQuestionPage() {
       return
     }
 
-    router.push('/admin')
+    router.push('/admin/questions')
+  }
+
+  if (loadingEdit) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#F8F3E9', padding: '48px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '18px', color: '#9A9A9A' }}>Loading…</p>
+      </div>
+    )
   }
 
   return (
@@ -81,10 +114,10 @@ export default function NewQuestionPage() {
       <div style={{ maxWidth: '640px', margin: '0 auto' }}>
         <div style={{ marginBottom: '32px' }}>
           <a
-            href="/admin"
+            href="/admin/questions"
             style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: '#6B6B6B', textDecoration: 'none' }}
           >
-            ← Dashboard
+            ← Questions
           </a>
           <h1
             style={{
@@ -96,7 +129,7 @@ export default function NewQuestionPage() {
               letterSpacing: '-0.02em',
             }}
           >
-            New question
+            {isEdit ? 'Edit question' : 'New question'}
           </h1>
         </div>
 
@@ -262,27 +295,28 @@ export default function NewQuestionPage() {
           )}
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <button
               onClick={saveDraft}
-              disabled={loading || !!savedId}
+              disabled={loading}
               style={{
                 padding: '12px 24px',
                 backgroundColor: 'transparent',
-                color: '#3D3D3D',
-                border: '2px solid #E0D9C8',
+                color: saved ? '#2E6B45' : '#3D3D3D',
+                border: `2px solid ${saved ? '#2E6B45' : '#E0D9C8'}`,
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
                 fontSize: '14px',
                 fontWeight: 600,
-                cursor: loading || !!savedId ? 'not-allowed' : 'pointer',
-                opacity: loading || !!savedId ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.6 : 1,
+                transition: 'color 150ms ease, border-color 150ms ease',
               }}
             >
-              {savedId ? '✓ Saved as draft' : loading ? 'Saving…' : 'Save as draft'}
+              {loading ? 'Saving…' : saved ? '✓ Saved' : isEdit ? 'Save changes' : 'Save as draft'}
             </button>
 
-            {savedId && (
+            {(savedId || isEdit) && (
               <button
                 onClick={publish}
                 disabled={publishing}
@@ -306,5 +340,17 @@ export default function NewQuestionPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewQuestionPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', backgroundColor: '#F8F3E9', padding: '48px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: '18px', color: '#9A9A9A' }}>Loading…</p>
+      </div>
+    }>
+      <NewQuestionForm />
+    </Suspense>
   )
 }

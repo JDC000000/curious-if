@@ -1,6 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
+export async function GET(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const id = request.nextUrl.searchParams.get('id')
+  if (!id) {
+    return NextResponse.json({ error: 'id is required' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('questions')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error || !data) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  return NextResponse.json(data)
+}
+
+export async function PATCH(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const body = await request.json() as {
+    id?: string
+    text?: string
+    whisper_line?: string | null
+    accent_colour?: string
+  }
+
+  const { id, text, whisper_line, accent_colour } = body
+
+  if (!id) {
+    return NextResponse.json({ error: 'id is required' }, { status: 400 })
+  }
+
+  if (!text?.trim()) {
+    return NextResponse.json({ error: 'Question text is required' }, { status: 400 })
+  }
+
+  if (whisper_line && whisper_line.length > 80) {
+    return NextResponse.json({ error: 'Whisper line must be 80 characters or fewer' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+  const { data, error } = await admin
+    .from('questions')
+    .update({
+      text: text.trim(),
+      whisper_line: whisper_line?.trim() || null,
+      ...(accent_colour ? { accent_colour } : {}),
+    })
+    .eq('id', id)
+    .eq('status', 'draft') // only allow editing drafts
+    .select('id')
+    .single()
+
+  if (error || !data) {
+    return NextResponse.json({ error: error?.message ?? 'Update failed' }, { status: 500 })
+  }
+
+  return NextResponse.json({ id: data.id })
+}
+
 export async function POST(request: NextRequest) {
   // Verify admin session
   const supabase = await createClient()

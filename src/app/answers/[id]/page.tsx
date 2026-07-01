@@ -2,6 +2,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { Answer, Question } from '@/lib/types/database'
 import SiteNav from '@/components/SiteNav'
 import CueCard from '@/components/CueCard'
+import ShareButton from '@/components/ShareButton'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -159,42 +160,48 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
           >
             How would you answer?
           </p>
-          <Link
-            href={`/answer?q=${question.id}`}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '12px 24px',
-              backgroundColor: question.accent_colour,
-              color: '#FFFFFF',
-              borderRadius: '8px',
-              fontFamily: 'var(--font-ui)',
-              fontSize: '14px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              marginRight: '12px',
-            }}
-          >
-            Write your reply
-          </Link>
-          <Link
-            href="/browse"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '12px 24px',
-              backgroundColor: 'transparent',
-              color: '#6B6B6B',
-              border: '1px solid #E0D9C8',
-              borderRadius: '8px',
-              fontFamily: 'var(--font-ui)',
-              fontSize: '14px',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Browse all
-          </Link>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link
+              href={`/answer?q=${question.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '12px 24px',
+                backgroundColor: question.accent_colour,
+                color: '#FFFFFF',
+                borderRadius: '8px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '14px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Write your reply
+            </Link>
+            <ShareButton
+              url={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'}/answers/${answer.id}`}
+              text={answer.body.slice(0, 100)}
+              accentColour={question.accent_colour}
+            />
+            <Link
+              href="/browse"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '12px 24px',
+                backgroundColor: 'transparent',
+                color: '#6B6B6B',
+                border: '1px solid #E0D9C8',
+                borderRadius: '8px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '14px',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Browse all
+            </Link>
+          </div>
         </div>
       </main>
     </>

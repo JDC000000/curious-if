@@ -11,9 +11,10 @@ type ModalState = 'hidden' | 'shown' | 'submitting' | 'done'
 interface AnswerFormProps {
   questionId: string
   accentColour: string
+  inviteRef?: string
 }
 
-export default function AnswerForm({ questionId, accentColour }: AnswerFormProps) {
+export default function AnswerForm({ questionId, accentColour, inviteRef }: AnswerFormProps) {
   const [answerBody, setAnswerBody] = useState('')
   const [formState, setFormState] = useState<FormState>('idle')
   const [answerId, setAnswerId] = useState<string | null>(null)
@@ -43,7 +44,7 @@ export default function AnswerForm({ questionId, accentColour }: AnswerFormProps
       const res = await fetch('/api/answers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId, answerBody }),
+        body: JSON.stringify({ questionId, answerBody, ref: inviteRef }),
       })
       const data = await res.json()
 

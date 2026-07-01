@@ -125,7 +125,7 @@ export default function CueCard({
       className="cursor-pointer"
       style={{
         perspective: '1200px',
-        width: '300px',
+        width: '100%',
         minHeight: '380px',
       }}
       onClick={() => setIsFlipped(f => !f)}

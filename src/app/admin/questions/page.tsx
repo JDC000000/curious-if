@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Question } from '@/lib/types/database'
 import Link from 'next/link'
+import QuestionPublishButton from '@/components/QuestionPublishButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -191,23 +192,26 @@ export default async function AdminQuestionsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
                           {q.status === 'draft' && (
-                            <Link
-                              href={`/admin/questions/new?edit=${q.id}`}
-                              style={{
-                                fontFamily: 'var(--font-ui)',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                color: '#6B6B6B',
-                                border: '1px solid #E0D9C8',
-                                borderRadius: '5px',
-                                padding: '5px 10px',
-                                textDecoration: 'none',
-                              }}
-                            >
-                              Edit
-                            </Link>
+                            <>
+                              <Link
+                                href={`/admin/questions/new?edit=${q.id}`}
+                                style={{
+                                  fontFamily: 'var(--font-ui)',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  color: '#6B6B6B',
+                                  border: '1px solid #E0D9C8',
+                                  borderRadius: '5px',
+                                  padding: '5px 10px',
+                                  textDecoration: 'none',
+                                }}
+                              >
+                                Edit
+                              </Link>
+                              <QuestionPublishButton questionId={q.id} accentColour={q.accent_colour} />
+                            </>
                           )}
                           {q.status !== 'draft' && (
                             <Link

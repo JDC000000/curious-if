@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 export const revalidate = 3600
 
 interface SearchParams {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; ref?: string }>
 }
 
 async function getQuestion(questionId?: string): Promise<Question | null> {
@@ -35,7 +35,7 @@ async function getQuestion(questionId?: string): Promise<Question | null> {
 }
 
 export default async function AnswerPage({ searchParams }: SearchParams) {
-  const { q: questionId } = await searchParams
+  const { q: questionId, ref: inviteRef } = await searchParams
   const question = await getQuestion(questionId)
 
   if (!question) {
@@ -111,6 +111,7 @@ export default async function AnswerPage({ searchParams }: SearchParams) {
         <AnswerForm
           questionId={question.id}
           accentColour={question.accent_colour}
+          inviteRef={inviteRef}
         />
       </main>
     </>

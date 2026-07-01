@@ -9,6 +9,7 @@ interface PendingAnswer {
   id: string
   body: string
   created_at: string
+  is_featured: boolean
   question: { text: string; accent_colour: string } | null
 }
 
@@ -22,6 +23,7 @@ async function getPendingAnswers(): Promise<PendingAnswer[]> {
       id,
       body,
       created_at,
+      is_featured,
       question:questions(text, accent_colour)
     `)
     .eq('status', 'pending')

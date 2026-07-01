@@ -6,6 +6,7 @@ interface PendingAnswer {
   id: string
   body: string
   created_at: string
+  is_featured: boolean
   question: { text: string; accent_colour: string } | null
 }
 
@@ -18,6 +19,21 @@ type ActionState = 'idle' | 'approving' | 'rejecting' | 'done'
 export default function ModerationQueue({ initialAnswers }: ModerationQueueProps) {
   const [answers, setAnswers] = useState<PendingAnswer[]>(initialAnswers)
   const [actionStates, setActionStates] = useState<Record<string, ActionState>>({})
+  const [featureLoading, setFeatureLoading] = useState<Record<string, boolean>>({})
+
+  const toggleFeature = async (answerId: string, currentlyFeatured: boolean) => {
+    setFeatureLoading(s => ({ ...s, [answerId]: true }))
+    try {
+      await fetch('/api/admin/answers/feature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answerId, featured: !currentlyFeatured }),
+      })
+      setAnswers(prev => prev.map(a => a.id === answerId ? { ...a, is_featured: !currentlyFeatured } : a))
+    } finally {
+      setFeatureLoading(s => ({ ...s, [answerId]: false }))
+    }
+  }
 
   const act = async (answerId: string, action: 'approve' | 'reject') => {
     setActionStates(s => ({ ...s, [answerId]: action === 'approve' ? 'approving' : 'rejecting' }))
@@ -126,7 +142,27 @@ export default function ModerationQueue({ initialAnswers }: ModerationQueueProps
                     ✓ Done
                   </span>
                 ) : (
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {/* Editor's pick toggle */}
+                    <button
+                      onClick={() => toggleFeature(answer.id, answer.is_featured)}
+                      disabled={featureLoading[answer.id]}
+                      title={answer.is_featured ? "Remove editor's pick" : "Mark as editor's pick"}
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: answer.is_featured ? '#FFF9E6' : 'transparent',
+                        color: answer.is_featured ? '#B8902A' : '#BABABA',
+                        border: `1px solid ${answer.is_featured ? '#B8902A' : '#E0D9C8'}`,
+                        borderRadius: '6px',
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: '13px',
+                        cursor: featureLoading[answer.id] ? 'not-allowed' : 'pointer',
+                        opacity: featureLoading[answer.id] ? 0.5 : 1,
+                        transition: 'color 150ms ease, border-color 150ms ease, background-color 150ms ease',
+                      }}
+                    >
+                      {answer.is_featured ? '★ Pick' : '☆ Pick'}
+                    </button>
                     <button
                       onClick={() => act(answer.id, 'approve')}
                       disabled={state !== 'idle'}
