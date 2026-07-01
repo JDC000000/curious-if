@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import BroadcastButton from '@/components/BroadcastButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,6 +115,11 @@ export default async function SubscribersPage() {
           >
             ← Dashboard
           </Link>
+        </div>
+
+        {/* Broadcast */}
+        <div style={{ marginBottom: '32px' }}>
+          <BroadcastButton activeCount={active} />
         </div>
 
         {/* Stats row */}
