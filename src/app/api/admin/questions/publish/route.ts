@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'
       await fetch(`${siteUrl}/api/revalidate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REVALIDATE_SECRET ?? ''}`,
+        },
         body: JSON.stringify({ paths: ['/', '/browse', '/archive'] }),
       })
     } catch (revalidateError) {

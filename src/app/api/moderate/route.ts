@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { timingSafeEqual } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
+
+// Only an internal caller holding MODERATE_SECRET may trigger auto-moderation.
+// This closes the bypass where an attacker POSTed innocent text for a stored
+// offensive answer. The moderated content is ALWAYS read from the DB below.
+function isAuthorizedInternalCaller(request: NextRequest): boolean {
+  const secret = process.env.MODERATE_SECRET
+  if (!secret) return false
+  const provided = request.headers.get('x-internal-secret') ?? ''
+  const a = Buffer.from(provided)
+  const b = Buffer.from(secret)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
 
 // STRICT check per TSD Task 11:
 // Only approve if response?.results?.[0]?.flagged === false (boolean false)
@@ -51,21 +64,41 @@ async function callOpenAIModeration(text: string): Promise<boolean | null> {
 }
 
 export async function POST(request: NextRequest) {
-  let body: { answerId?: string; answerBody?: string }
+  // Auth: internal callers only (service-role-equivalent shared secret).
+  if (!isAuthorizedInternalCaller(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  let body: { answerId?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { answerId, answerBody } = body
+  const { answerId } = body
 
-  if (!answerId || !answerBody) {
-    return NextResponse.json({ error: 'answerId and answerBody required' }, { status: 400 })
+  if (!answerId) {
+    return NextResponse.json({ error: 'answerId required' }, { status: 400 })
   }
 
-  const moderationResult = await callOpenAIModeration(answerBody)
   const supabase = createAdminClient()
+
+  // Moderate the STORED content, never a caller-supplied body. Only pending rows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: pending } = await (supabase as any)
+    .from('answers')
+    .select('body, status')
+    .eq('id', answerId)
+    .eq('status', 'pending')
+    .single()
+
+  if (!pending) {
+    // Already moderated, missing, or not pending — nothing to do.
+    return NextResponse.json({ status: 'skipped' })
+  }
+
+  const moderationResult = await callOpenAIModeration(pending.body)
 
   // moderationResult === false  → clean, approve it
   // moderationResult === null   → error/timeout/flagged, leave as pending

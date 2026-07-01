@@ -87,8 +87,12 @@ export async function POST(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'
   fetch(`${siteUrl}/api/moderate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ answerId: answer.id, answerBody: answerBody.trim() }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-internal-secret': process.env.MODERATE_SECRET ?? '',
+    },
+    // Only the id — /api/moderate reads the stored body from the DB itself.
+    body: JSON.stringify({ answerId: answer.id }),
   }).catch((err) => {
     // Non-fatal — answer stays pending; admin can moderate manually
     console.warn('Moderation trigger failed:', err)
