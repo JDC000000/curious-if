@@ -30,6 +30,10 @@ export interface Answer {
   og_generated: boolean
   is_featured: boolean
   resonance_count: number
+  /** Temporary sock-puppet seed answer — deleted once real answers fill the room */
+  is_seed: boolean
+  /** Phase-3B display label e.g. "D.W. · Vancouver". Overrides submitter name+city when set. */
+  author_display: string | null
   created_at: string
   approved_at: string | null
 }

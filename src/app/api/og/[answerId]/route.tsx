@@ -9,8 +9,9 @@ async function getAnswerData(answerId: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+  // Exclude seed answers from OG pipeline — they are temporary scaffolding
   const answerRes = await fetch(
-    `${supabaseUrl}/rest/v1/answers?id=eq.${answerId}&status=eq.approved&select=body,question_id,approved_at`,
+    `${supabaseUrl}/rest/v1/answers?id=eq.${answerId}&status=eq.approved&is_seed=eq.false&select=body,question_id,approved_at`,
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
   )
   const answers = await answerRes.json()

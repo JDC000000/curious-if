@@ -22,6 +22,7 @@ async function getAnswer(id: string): Promise<{ answer: Answer; question: Questi
     .select('*')
     .eq('id', id)
     .eq('status', 'approved') // 404 for pending/rejected
+    .eq('is_seed', false) // seed answers have no shareable permalinks
     .single()
 
   if (!answer) return null
@@ -132,6 +133,11 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
         <div style={{ maxWidth: '360px', marginBottom: '48px' }}>
           <CueCard
             answer={answer.body}
+            author={
+              answer.author_display && answer.author_display !== 'Anonymous'
+                ? answer.author_display
+                : undefined
+            }
             month={monthLabel}
             accentColour={question.accent_colour}
             questionLabel={questionLabel}
