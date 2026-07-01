@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { blindIndex, encryptEmail } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
+import { escapeHtml } from '@/lib/escapeHtml'
 import { rateGuard } from '@/lib/rateLimit'
 
 async function sendInviteEmail({
@@ -57,13 +58,13 @@ async function sendInviteEmail({
 
               <div style="border-left:3px solid #1A1A1A;padding:16px 20px;margin:0 0 24px;background-color:#F8F3E9;border-radius:0 8px 8px 0;">
                 <p style="font-family:Georgia,serif;font-style:italic;font-size:18px;font-weight:600;line-height:1.4;color:#1A1A1A;margin:0;">
-                  ${questionText}
+                  ${escapeHtml(questionText)}
                 </p>
               </div>
 
               ${personalNote ? `
               <p style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:#6B6B6B;font-style:italic;margin:0 0 24px;">
-                They left you a note: &ldquo;${personalNote}&rdquo;
+                They left you a note: &ldquo;${escapeHtml(personalNote)}&rdquo;
               </p>
               ` : ''}
 
@@ -148,6 +149,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Valid nominee email required' }, { status: 400 })
   }
 
+  // Server-side length cap — do not trust the client's 200-char limit.
+  const note = typeof personalNote === 'string' ? personalNote.trim().slice(0, 200) || null : null
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createAdminClient() as any
 
@@ -173,7 +177,7 @@ export async function POST(request: NextRequest) {
       question_id: question.id,
       nominee_email_encrypted: encryptEmail(nomineeEmail),
       blind_index_email: blindIndex(nomineeEmail),
-      personal_note: personalNote?.trim() || null,
+      personal_note: note,
       token: inviteToken,
     })
     .select('id')
@@ -187,7 +191,7 @@ export async function POST(request: NextRequest) {
   // Send invite email (fire-and-forget)
   void sendInviteEmail({
     nomineeEmail,
-    personalNote: personalNote?.trim(),
+    personalNote: note ?? undefined,
     questionText: question.text,
     inviteToken,
   })

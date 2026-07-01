@@ -5,6 +5,7 @@ import { rateGuard } from '@/lib/rateLimit'
 import { triggerReciprocalNotification } from '@/lib/reciprocalNotification'
 import { encrypt, encryptEmail, blindIndex } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
+import { escapeHtml } from '@/lib/escapeHtml'
 
 async function addToResendContacts(email: string, name?: string) {
   const apiKey = process.env.RESEND_API_KEY
@@ -82,7 +83,7 @@ To unsubscribe: ${unsubscribeUrl}`
 }
 
 function welcomeEmailHtml(firstName: string | null, unsubscribeUrl: string): string {
-  const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
+  const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : 'Hi,'
 
   return `<!DOCTYPE html>
 <html lang="en">

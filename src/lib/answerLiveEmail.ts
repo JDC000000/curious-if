@@ -3,6 +3,7 @@
 // and by /api/subscribe when the answer is already approved by the time email is captured.
 
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
+import { escapeHtml } from '@/lib/escapeHtml'
 
 const SITE = 'https://curiousif.blog'
 
@@ -19,7 +20,9 @@ export async function sendAnswerLiveEmail(
 
   const firstName = name?.split(' ')[0] ?? null
   const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
+  const greetingHtml = firstName ? `Hi ${escapeHtml(firstName)},` : 'Hi,'
   const preview = answerBody.length > 160 ? answerBody.slice(0, 157) + '…' : answerBody
+  const previewHtml = escapeHtml(preview)
   const permalinkUrl = `${SITE}/answers/${answerId}`
   const browseUrl = `${SITE}/browse`
   const unsubscribeUrl = `${SITE}/unsubscribe?token=${signUnsubscribeToken(email)}`
@@ -52,7 +55,7 @@ export async function sendAnswerLiveEmail(
             <td style="background-color:#FFFFFF;border-radius:12px;padding:40px 40px 48px;box-shadow:0 2px 12px rgba(26,26,46,0.07);">
 
               <p style="font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.7;color:#1A1A1A;margin:0 0 20px;">
-                ${greeting}
+                ${greetingHtml}
               </p>
 
               <p style="font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.7;color:#1A1A1A;margin:0 0 20px;">
@@ -64,7 +67,7 @@ export async function sendAnswerLiveEmail(
                 <tr>
                   <td style="border-left:3px solid #E0D9C8;padding:12px 16px;">
                     <p style="font-family:Georgia,'Times New Roman',serif;font-size:15px;font-style:italic;line-height:1.65;color:#3D3D3D;margin:0 0 6px;">
-                      &ldquo;${preview}&rdquo;
+                      &ldquo;${previewHtml}&rdquo;
                     </p>
                     <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#BABABA;margin:0;letter-spacing:0.06em;text-transform:uppercase;">
                       ${monthLabel}

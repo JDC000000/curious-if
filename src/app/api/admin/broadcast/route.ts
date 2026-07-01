@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { decrypt, decryptEmail } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
+import { escapeHtml } from '@/lib/escapeHtml'
 
 interface Question {
   id: string
@@ -25,18 +26,20 @@ function broadcastEmailHtml({
   monthLabel: string
   subscriber: Subscriber
 }): string {
-  const greeting = subscriber.name ? `Hi ${subscriber.name.split(' ')[0]},` : 'Hi,'
+  const greeting = subscriber.name ? `Hi ${escapeHtml(subscriber.name.split(' ')[0])},` : 'Hi,'
   const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(subscriber.email)}`
   const browseUrl = `https://curiousif.blog/browse`
   const answerUrl = `https://curiousif.blog/answer`
   const accentColour = question.accent_colour ?? '#3D5A8C'
+  const qText = escapeHtml(question.text)
+  const qWhisper = question.whisper_line ? escapeHtml(question.whisper_line) : null
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${question.text}</title>
+  <title>${qText}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F8F3E9;font-family:Georgia,'Times New Roman',serif;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8F3E9;">
@@ -76,13 +79,13 @@ function broadcastEmailHtml({
                 </p>
 
                 <!-- The question -->
-                <p style="font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.3;color:#1A1A1A;letter-spacing:-0.02em;margin:0${question.whisper_line ? ' 0 16px' : ' 0 32px'};">
-                  ${question.text}
+                <p style="font-family:Georgia,serif;font-size:26px;font-weight:700;line-height:1.3;color:#1A1A1A;letter-spacing:-0.02em;margin:0${qWhisper ? ' 0 16px' : ' 0 32px'};">
+                  ${qText}
                 </p>
 
-                ${question.whisper_line ? `
+                ${qWhisper ? `
                 <p style="font-family:Georgia,serif;font-style:italic;font-size:16px;color:rgba(26,26,26,0.5);line-height:1.55;margin:0 0 32px;">
-                  ${question.whisper_line}
+                  ${qWhisper}
                 </p>
                 ` : ''}
 
