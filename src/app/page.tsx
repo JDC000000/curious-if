@@ -1,24 +1,34 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { Question } from '@/lib/types/database'
 import SiteNav from '@/components/SiteNav'
+import HomeSubscribeStrip from '@/components/HomeSubscribeStrip'
 import Link from 'next/link'
 
 export const revalidate = 3600
 
-async function getFeaturedQuestion(): Promise<Question | null> {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase
+async function getFeaturedData(): Promise<{ question: Question | null; answerCount: number }> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
+
+  const { data: question } = await supabase
     .from('questions')
     .select('*')
     .eq('status', 'featured')
     .single()
 
-  if (error || !data) return null
-  return data as Question
+  if (!question) return { question: null, answerCount: 0 }
+
+  const { count } = await supabase
+    .from('answers')
+    .select('*', { count: 'exact', head: true })
+    .eq('question_id', (question as Question).id)
+    .eq('status', 'approved')
+
+  return { question: question as Question, answerCount: count ?? 0 }
 }
 
 export default async function HomePage() {
-  const question = await getFeaturedQuestion()
+  const { question, answerCount } = await getFeaturedData()
 
   return (
     <>
@@ -27,7 +37,7 @@ export default async function HomePage() {
         {!question ? (
           <HoldingState />
         ) : (
-          <FeaturedQuestion question={question} />
+          <FeaturedQuestion question={question} answerCount={answerCount} />
         )}
       </main>
     </>
@@ -77,7 +87,7 @@ function HoldingState() {
   )
 }
 
-function FeaturedQuestion({ question }: { question: Question }) {
+function FeaturedQuestion({ question, answerCount }: { question: Question; answerCount: number }) {
   const accentColour = question.accent_colour
 
   const publishedDate = question.published_at ? new Date(question.published_at) : new Date()
@@ -97,6 +107,7 @@ function FeaturedQuestion({ question }: { question: Question }) {
       }}
     >
       <div style={{ maxWidth: '680px', width: '100%' }}>
+        {/* Question card */}
         <div
           style={{
             backgroundColor: '#FFFFFF',
@@ -209,6 +220,28 @@ function FeaturedQuestion({ question }: { question: Question }) {
             </div>
           </div>
         </div>
+
+        {/* Social proof: answer count */}
+        {answerCount > 0 && (
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <Link
+              href="/browse"
+              style={{
+                fontFamily: 'var(--font-ui)',
+                fontSize: '13px',
+                color: '#9A9A9A',
+                textDecoration: 'none',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {answerCount} {answerCount === 1 ? 'answer' : 'answers'} so far —{' '}
+              <span style={{ color: accentColour, fontWeight: 600 }}>Browse →</span>
+            </Link>
+          </div>
+        )}
+
+        {/* Email subscribe strip */}
+        <HomeSubscribeStrip accentColour={accentColour} />
       </div>
     </div>
   )

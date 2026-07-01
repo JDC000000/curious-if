@@ -1,33 +1,27 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { Question, ArchiveHeadline } from '@/lib/types/database'
+import { Question } from '@/lib/types/database'
 import SiteNav from '@/components/SiteNav'
 import Link from 'next/link'
 import { ACCENTS } from '@/lib/palette'
 
 export const revalidate = 3600
 
-type QuestionWithHeadline = Question & {
-  archive_headlines: ArchiveHeadline[]
-  answer_count: number
-}
+type QuestionWithCount = Question & { answer_count: number }
 
-async function getArchive(): Promise<QuestionWithHeadline[]> {
-  const supabase = createAdminClient()
+async function getArchive(): Promise<QuestionWithCount[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
 
   const { data } = await supabase
     .from('questions')
-    .select(`
-      *,
-      archive_headlines (id, headline, created_at)
-    `)
-    .eq('status', 'published')
+    .select('*')
+    .in('status', ['published', 'featured'])
     .order('published_at', { ascending: false })
 
   if (!data) return []
 
-  // Get answer counts for each question
   const withCounts = await Promise.all(
-    (data as (Question & { archive_headlines: ArchiveHeadline[] })[]).map(async (q) => {
+    (data as Question[]).map(async (q) => {
       const { count } = await supabase
         .from('answers')
         .select('*', { count: 'exact', head: true })
@@ -87,8 +81,9 @@ export default async function ArchivePage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '24px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '20px',
+              alignItems: 'start',
             }}
           >
             {questions.map(q => {
@@ -97,6 +92,7 @@ export default async function ArchivePage() {
               const monthName = date.toLocaleString('en-GB', { month: 'long' })
               const year = date.getFullYear()
               const href = `/browse/${year}/${String(date.getMonth() + 1).padStart(2, '0')}`
+              const isFeatured = q.status === 'featured'
 
               return (
                 <Link
@@ -109,26 +105,44 @@ export default async function ArchivePage() {
                       backgroundColor: '#FFFFFF',
                       borderRadius: '12px',
                       overflow: 'hidden',
-                      boxShadow: '0 2px 8px rgba(26,26,46,0.08)',
+                      boxShadow: isFeatured
+                        ? `0 4px 16px rgba(26,26,46,0.12), 0 0 0 2px ${accent}33`
+                        : '0 2px 8px rgba(26,26,46,0.08)',
                       transition: 'box-shadow 150ms ease, transform 150ms ease',
                       cursor: 'pointer',
                     }}
                     className="archive-deck-card"
                   >
                     <div style={{ height: '5px', backgroundColor: accent }} />
-                    <div style={{ padding: '24px' }}>
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: accent,
-                          marginBottom: '12px',
-                        }}
-                      >
-                        {monthName} {year}
+                    <div style={{ padding: '22px 24px 20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                        <div
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '11px',
+                            fontWeight: 500,
+                            letterSpacing: '0.1em',
+                            textTransform: 'uppercase',
+                            color: accent,
+                          }}
+                        >
+                          {monthName} {year}
+                        </div>
+                        {isFeatured && (
+                          <span style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '9px',
+                            fontWeight: 500,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: accent,
+                            border: `1px solid ${accent}55`,
+                            borderRadius: '3px',
+                            padding: '2px 6px',
+                          }}>
+                            This month
+                          </span>
+                        )}
                       </div>
                       <p
                         style={{
@@ -137,7 +151,7 @@ export default async function ArchivePage() {
                           fontWeight: 600,
                           lineHeight: 1.4,
                           color: '#1A1A1A',
-                          marginBottom: '16px',
+                          marginBottom: '14px',
                           display: '-webkit-box',
                           WebkitLineClamp: 3,
                           WebkitBoxOrient: 'vertical',
@@ -158,7 +172,7 @@ export default async function ArchivePage() {
                       >
                         <span>{q.answer_count} {q.answer_count === 1 ? 'answer' : 'answers'}</span>
                         <span>·</span>
-                        <span style={{ color: accent }}>Read →</span>
+                        <span style={{ color: accent, fontWeight: 500 }}>Read →</span>
                       </div>
                     </div>
                   </div>
@@ -170,7 +184,7 @@ export default async function ArchivePage() {
       </main>
       <style>{`
         .archive-deck-card:hover {
-          box-shadow: 0 8px 24px rgba(26,26,46,0.14);
+          box-shadow: 0 8px 24px rgba(26,26,46,0.14) !important;
           transform: translateY(-2px);
         }
       `}</style>

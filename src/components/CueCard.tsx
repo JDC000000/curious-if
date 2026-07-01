@@ -314,6 +314,24 @@ export default function CueCard({
                   ) : (
                     <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(248,243,233,0.3)' }}>Anonymous</div>
                   )}
+                  {answerId && (
+                    <a
+                      href={`/answers/${answerId}`}
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '10px',
+                        color: accentColour,
+                        textDecoration: 'none',
+                        letterSpacing: '0.04em',
+                        opacity: 0.8,
+                        display: 'inline-block',
+                        marginTop: '2px',
+                      }}
+                    >
+                      permalink ↗
+                    </a>
+                  )}
                 </div>
                 {/* Resonance on back — same button, dark theme colours handled via accentColour */}
                 <button

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,39 @@ export async function POST(request: NextRequest) {
   await (adminClient as any)
     .from('moderation_log')
     .insert({ answer_id: answerId, action, openai_flagged: null })
+
+  // ISR revalidation — approved answers should appear immediately on browse
+  if (action === 'approve') {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: ans } = await (adminClient as any)
+        .from('answers')
+        .select('question_id')
+        .eq('id', answerId)
+        .single()
+
+      if (ans?.question_id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: q } = await (adminClient as any)
+          .from('questions')
+          .select('published_at')
+          .eq('id', ans.question_id)
+          .single()
+
+        revalidatePath('/browse')
+        revalidatePath('/')
+
+        if (q?.published_at) {
+          const d = new Date(q.published_at)
+          const year = d.getFullYear()
+          const month = String(d.getMonth() + 1).padStart(2, '0')
+          revalidatePath(`/browse/${year}/${month}`)
+        }
+      }
+    } catch {
+      // Non-fatal — ISR will catch up on its own TTL
+    }
+  }
 
   return NextResponse.json({ success: true, status: newStatus })
 }
