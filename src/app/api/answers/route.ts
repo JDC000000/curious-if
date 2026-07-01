@@ -4,14 +4,14 @@ import { createAdminClient } from '@/lib/supabase/server'
 const MAX_BODY_LENGTH = 1500
 
 export async function POST(request: NextRequest) {
-  let body: { questionId?: string; answerBody?: string }
+  let body: { questionId?: string; answerBody?: string; ref?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { questionId, answerBody } = body
+  const { questionId, answerBody, ref } = body
 
   // Validate inputs
   if (!answerBody || typeof answerBody !== 'string' || answerBody.trim().length === 0) {
@@ -55,6 +55,19 @@ export async function POST(request: NextRequest) {
   if (insertError || !answer) {
     console.error('Answer insert error:', insertError)
     return NextResponse.json({ error: 'Failed to save answer' }, { status: 500 })
+  }
+
+  // Mark nomination as used if this answer came via an invite link (fire-and-forget)
+  if (ref) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase as any)
+      .from('nominations')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', ref)
+      .is('used_at', null) // only mark once
+      .gte('expires_at', new Date().toISOString()) // only if not expired
+      .then(() => {})
+      .catch(() => {})
   }
 
   // Trigger OpenAI moderation asynchronously (fire-and-forget)

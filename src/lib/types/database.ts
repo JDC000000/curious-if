@@ -29,6 +29,7 @@ export interface Answer {
   openai_flagged: boolean | null
   og_generated: boolean
   is_featured: boolean
+  resonance_count: number
   created_at: string
   approved_at: string | null
 }

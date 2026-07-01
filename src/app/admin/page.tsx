@@ -54,8 +54,8 @@ export default async function AdminDashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
           <AdminCard
             title="Questions"
-            description="Create, draft, and publish monthly questions"
-            href="/admin/questions/new"
+            description="View, draft, and publish monthly questions"
+            href="/admin/questions"
             accent="#3D5A8C"
           />
           <AdminCard
