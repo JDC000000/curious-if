@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { rateGuard } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
+  // 20 resonance toggles per IP per 10 minutes — enough for genuine browsing,
+  // curbs automated count manipulation.
+  const limited = await rateGuard(request, 'resonance', 20, 600)
+  if (limited) return limited
+
   let body: { answerId?: string; action?: 'add' | 'remove' }
   try {
     body = await request.json()

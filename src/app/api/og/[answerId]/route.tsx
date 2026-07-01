@@ -5,7 +5,14 @@ export const runtime = 'edge'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function getAnswerData(answerId: string) {
+  // Reject anything that isn't a bare UUID before it reaches the PostgREST query
+  // string — stops param injection (e.g. &or=(status.eq.pending)) that could
+  // surface unapproved answer bodies.
+  if (!UUID_RE.test(answerId)) return null
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
