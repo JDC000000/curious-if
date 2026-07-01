@@ -149,7 +149,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '10px 20px',
-                backgroundColor: accentColour,
+                backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',

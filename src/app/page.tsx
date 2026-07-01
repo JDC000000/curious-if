@@ -170,7 +170,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '12px 24px',
-                  backgroundColor: accentColour,
+                  backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                   color: '#FFFFFF',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',

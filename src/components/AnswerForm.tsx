@@ -448,7 +448,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
           disabled={!canSubmit}
           style={{
             padding: '14px 32px',
-            backgroundColor: canSubmit ? accentColour : '#E0D9C8',
+            backgroundColor: canSubmit ? '#C4703A' : '#E0D9C8', // primary answer CTA — operator brand spec
             color: canSubmit ? '#FFFFFF' : '#9A9A9A',
             border: 'none',
             borderRadius: '8px',

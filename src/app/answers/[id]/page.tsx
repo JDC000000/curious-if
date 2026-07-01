@@ -175,7 +175,7 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 padding: '12px 24px',
-                backgroundColor: question.accent_colour,
+                backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
