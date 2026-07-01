@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
   if (!questionId || typeof questionId !== 'string') {
     return NextResponse.json({ error: 'questionId is required' }, { status: 400 })
   }
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!UUID_RE.test(questionId)) {
+    return NextResponse.json({ error: 'Invalid questionId format' }, { status: 400 })
+  }
 
   const supabase = createAdminClient()
 
