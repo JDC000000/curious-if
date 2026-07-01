@@ -13,6 +13,33 @@ interface CueCardProps {
   initialResonanceCount?: number
 }
 
+/**
+ * Compute a pixel height for the card based on content length.
+ * Short answers → small card. Long answers → bigger card, capped at 400px.
+ * Returns the height and whether the card should flip (content doesn't fit on front).
+ */
+function computeCard(body: string): { height: number; clamp: number; needsFlip: boolean } {
+  // ~32 chars per line in a ~240px content area at 16px Fraunces
+  const charsPerLine = 32
+  const lineH = 28          // 16px * 1.75 ≈ generous spacing
+  const maxClamp = 7        // max lines shown on front face
+
+  const totalLines = Math.ceil(body.length / charsPerLine)
+  const visibleLines = Math.min(totalLines, maxClamp)
+
+  // overhead = colour bar (5) + top pad (20) + mono label+margin (32) + text margin (16)
+  //            + footer row (28) + bottom pad (20) = 121
+  // For short cards also add 8px breathing room
+  const overhead = 129
+  const height = Math.max(160, Math.min(400, overhead + visibleLines * lineH))
+
+  return {
+    height,
+    clamp: maxClamp,
+    needsFlip: totalLines > 4,   // only offer flip when content exceeds ~4 lines
+  }
+}
+
 export default function CueCard({
   answer,
   author,
@@ -24,8 +51,11 @@ export default function CueCard({
   initialResonanceCount = 0,
 }: CueCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [resonated, setResonated] = useState(false)
   const [resonanceCount, setResonanceCount] = useState(initialResonanceCount)
+
+  const { height, clamp, needsFlip } = computeCard(answer)
 
   // Restore resonance state from localStorage on mount
   useEffect(() => {
@@ -46,24 +76,16 @@ export default function CueCard({
     setResonated(next)
     setResonanceCount(c => Math.max(0, c + (next ? 1 : -1)))
 
-    // Persist to localStorage
     try {
-      if (next) {
-        localStorage.setItem(`resonated_${answerId}`, '1')
-      } else {
-        localStorage.removeItem(`resonated_${answerId}`)
-      }
-    } catch {
-      // Ignore
-    }
+      if (next) localStorage.setItem(`resonated_${answerId}`, '1')
+      else localStorage.removeItem(`resonated_${answerId}`)
+    } catch { /* ignore */ }
 
-    // Fire-and-forget to API
     fetch('/api/resonance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answerId, action: next ? 'add' : 'remove' }),
     }).catch(() => {
-      // Non-fatal — revert state on failure
       setResonated(!next)
       setResonanceCount(c => Math.max(0, c + (next ? -1 : 1)))
     })
@@ -76,26 +98,20 @@ export default function CueCard({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '5px',
+        gap: '4px',
         background: 'none',
         border: 'none',
         cursor: answerId ? 'pointer' : 'default',
-        color: resonated ? accentColour : '#9A9A9A',
+        color: resonated ? accentColour : '#BABABA',
         transition: 'color 150ms ease',
-        padding: '4px',
+        padding: '2px 0',
         lineHeight: 1,
+        flexShrink: 0,
       }}
     >
-      <span style={{ fontSize: '18px' }}>{resonated ? '◆' : '◇'}</span>
+      <span style={{ fontSize: '16px' }}>{resonated ? '◆' : '◇'}</span>
       {resonanceCount > 0 && (
-        <span
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            fontWeight: 500,
-            letterSpacing: '0.02em',
-          }}
-        >
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500 }}>
           {resonanceCount}
         </span>
       )}
@@ -103,152 +119,96 @@ export default function CueCard({
   )
 
   const authorBlock = (
-    <div>
-      {author && (
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 500, color: '#3D3D3D' }}>
-          {author}
+    <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+      {author ? (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 500, color: '#3D3D3D', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {author}{city ? `, ${city}` : ''}
         </div>
-      )}
-      {city && (
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#6B6B6B' }}>
-          {city}
-        </div>
-      )}
-      {!author && !city && (
-        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#9A9A9A' }}>Anonymous</div>
+      ) : (
+        <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: '#BABABA' }}>Anonymous</div>
       )}
     </div>
   )
 
+  const handleClick = () => {
+    if (needsFlip) setIsFlipped(f => !f)
+  }
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if ((e.key === 'Enter' || e.key === ' ') && needsFlip) setIsFlipped(f => !f)
+  }
+
+  // Front hover lift — only when not flipped
+  const frontShadow = isFlipped
+    ? '0 1px 4px rgba(26,26,46,0.08)'
+    : hovered
+    ? '0 8px 24px rgba(26,26,46,0.16), 0 2px 6px rgba(26,26,46,0.08)'
+    : '0 2px 8px rgba(26,26,46,0.10), 0 1px 3px rgba(26,26,46,0.05)'
+
+  const frontTransform = hovered && !isFlipped ? 'translateY(-3px)' : undefined
+
   return (
     <div
-      className="cursor-pointer"
       style={{
         perspective: '1200px',
         width: '100%',
-        minHeight: '380px',
+        height: `${height}px`,
+        cursor: needsFlip ? 'pointer' : 'default',
       }}
-      onClick={() => setIsFlipped(f => !f)}
-      role="button"
-      tabIndex={0}
-      aria-label={isFlipped ? 'Tap to flip back' : 'Tap to read full answer'}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsFlipped(f => !f) }}
+      onClick={handleClick}
+      role={needsFlip ? 'button' : undefined}
+      tabIndex={needsFlip ? 0 : undefined}
+      aria-label={needsFlip ? (isFlipped ? 'Tap to flip back' : 'Tap to read full answer') : undefined}
+      onKeyDown={handleKey}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div
         style={{
           position: 'relative',
           width: '100%',
           height: '100%',
-          minHeight: '380px',
           transformStyle: 'preserve-3d',
-          transition: 'transform 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          transition: 'transform 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
         }}
       >
-        {/* FRONT */}
+        {/* ── FRONT ── */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            backgroundColor: '#F8F3E9',
-            borderRadius: '12px',
-            boxShadow: isFlipped
-              ? '0 2px 8px rgba(26,26,46,0.10)'
-              : '0 2px 8px rgba(26,26,46,0.10), 0 1px 3px rgba(26,26,46,0.06)',
+            backgroundColor: '#FDFAF3',
+            borderRadius: '10px',
+            boxShadow: frontShadow,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            transition: isFlipped ? 'none' : 'box-shadow 150ms cubic-bezier(0.4,0,0.2,1), transform 150ms cubic-bezier(0.4,0,0.2,1)',
+            transition: 'box-shadow 150ms ease, transform 150ms ease',
+            transform: frontTransform,
           }}
-          className={!isFlipped ? 'card-front-hover' : ''}
         >
-          <div style={{ height: '5px', backgroundColor: accentColour, flexShrink: 0 }} />
+          {/* Accent stripe */}
+          <div style={{ height: '4px', backgroundColor: accentColour, flexShrink: 0 }} />
 
-          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono, "IBM Plex Mono", monospace)',
-                fontSize: '11px',
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: '#6B6B6B',
-                marginBottom: '16px',
-              }}
-            >
-              {questionLabel}
-            </div>
-
-            <p
-              style={{
-                fontFamily: 'var(--font-serif, Fraunces, serif)',
-                fontSize: '16px',
-                lineHeight: '1.65',
-                color: '#1A1A1A',
-                flex: 1,
-                overflow: 'hidden',
-                display: '-webkit-box',
-                WebkitLineClamp: 4,
-                WebkitBoxOrient: 'vertical',
-                marginBottom: '20px',
-              }}
-            >
-              {answer}
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
-              {authorBlock}
-              {resonanceButton}
-            </div>
-
+          <div style={{ padding: '18px 20px 18px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            {/* Month/question label */}
             <div style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '10px',
-              color: '#9A9A9A',
-              textAlign: 'center',
-              marginTop: '12px',
-              letterSpacing: '0.05em',
+              fontWeight: 500,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: '#BABABA',
+              marginBottom: '12px',
+              flexShrink: 0,
             }}>
-              tap to read
-            </div>
-          </div>
-        </div>
-
-        {/* BACK */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            backgroundColor: '#F8F3E9',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(26,26,46,0.10), 0 1px 3px rgba(26,26,46,0.06)',
-            overflow: 'hidden',
-            transform: 'rotateY(180deg)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ height: '5px', backgroundColor: accentColour, flexShrink: 0 }} />
-
-          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: accentColour,
-                marginBottom: '16px',
-              }}
-            >
-              {month}
+              {questionLabel}
             </div>
 
+            {/* Answer text */}
             <p
               style={{
                 fontFamily: 'var(--font-serif)',
@@ -256,28 +216,135 @@ export default function CueCard({
                 lineHeight: '1.7',
                 color: '#1A1A1A',
                 flex: 1,
-                overflowY: 'auto',
-                marginBottom: '20px',
+                marginBottom: '14px',
+                ...(needsFlip ? {
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: clamp,
+                  WebkitBoxOrient: 'vertical',
+                } : {
+                  // Short answers: show completely, no truncation
+                  overflow: 'hidden',
+                }),
               }}
             >
               {answer}
             </p>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+            {/* Footer row */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexShrink: 0 }}>
               {authorBlock}
-              {resonanceButton}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {needsFlip && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '10px',
+                    color: '#CFCBC0',
+                    letterSpacing: '0.04em',
+                    userSelect: 'none',
+                  }}>
+                    flip →
+                  </span>
+                )}
+                {resonanceButton}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <style jsx>{`
-        .card-front-hover:hover {
-          box-shadow: 0 12px 32px rgba(26,26,46,0.18), 0 4px 8px rgba(26,26,46,0.10);
-          transform: rotate(2deg) translateY(-6px);
-          transition: box-shadow 150ms cubic-bezier(0.4,0,0.2,1), transform 150ms cubic-bezier(0.4,0,0.2,1);
-        }
-      `}</style>
+        {/* ── BACK ── */}
+        {needsFlip && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              backgroundColor: '#1A1A2E',
+              borderRadius: '10px',
+              boxShadow: '0 4px 16px rgba(26,26,46,0.24)',
+              overflow: 'hidden',
+              transform: 'rotateY(180deg)',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Accent stripe */}
+            <div style={{ height: '4px', backgroundColor: accentColour, flexShrink: 0 }} />
+
+            <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              {/* Month label */}
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                fontWeight: 500,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: accentColour,
+                marginBottom: '12px',
+                flexShrink: 0,
+              }}>
+                {month}
+              </div>
+
+              {/* Full answer text — scrollable */}
+              <p
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: '14px',
+                  lineHeight: '1.72',
+                  color: 'rgba(248,243,233,0.88)',
+                  flex: 1,
+                  overflowY: 'auto',
+                  marginBottom: '14px',
+                  scrollbarWidth: 'none',
+                }}
+              >
+                {answer}
+              </p>
+
+              {/* Footer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexShrink: 0 }}>
+                {/* Author — dark theme version */}
+                <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
+                  {author ? (
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', fontWeight: 500, color: 'rgba(248,243,233,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {author}{city ? `, ${city}` : ''}
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: 'var(--font-ui)', fontSize: '12px', color: 'rgba(248,243,233,0.3)' }}>Anonymous</div>
+                  )}
+                </div>
+                {/* Resonance on back — same button, dark theme colours handled via accentColour */}
+                <button
+                  onClick={handleResonance}
+                  aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: answerId ? 'pointer' : 'default',
+                    color: resonated ? accentColour : 'rgba(248,243,233,0.3)',
+                    transition: 'color 150ms ease',
+                    padding: '2px 0',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>{resonated ? '◆' : '◇'}</span>
+                  {resonanceCount > 0 && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500 }}>
+                      {resonanceCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

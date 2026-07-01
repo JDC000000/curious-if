@@ -129,7 +129,7 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
         </div>
 
         {/* The answer card */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '48px' }}>
+        <div style={{ maxWidth: '360px', marginBottom: '48px' }}>
           <CueCard
             answer={answer.body}
             month={monthLabel}
