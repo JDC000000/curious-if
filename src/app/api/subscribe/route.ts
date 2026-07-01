@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
 
 async function addToResendContacts(email: string, name?: string) {
   const apiKey = process.env.RESEND_API_KEY
@@ -209,20 +210,44 @@ export async function POST(request: NextRequest) {
     )
 
   // Link submitter to the answer they just submitted
+  // Also check if the answer auto-approved before they entered their email
+  let answerAlreadyApproved = false
   if (answerId) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: answerData } = await (supabase as any)
+      .from('answers')
+      .select('id, body, status, question:questions(text, published_at)')
+      .eq('id', answerId)
+      .single()
+
+    // Link submitter if not already linked
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from('answers')
       .update({ submitter_id: submitter.id })
       .eq('id', answerId)
-      .is('submitter_id', null) // Safety: only update if not already linked
+      .is('submitter_id', null)
+
+    // If auto-approve already ran, fire the "answer is live" email now
+    if (answerData?.status === 'approved') {
+      answerAlreadyApproved = true
+      void sendAnswerLiveEmail(
+        email,
+        name ?? null,
+        answerId,
+        answerData.body,
+        answerData.question?.text ?? '',
+        answerData.question?.published_at ?? null,
+      )
+    }
   }
 
   // Add to Resend Contacts (fire-and-forget)
   void addToResendContacts(email, name)
 
-  // Send welcome email only to new subscribers (fire-and-forget)
-  if (isNewSubscriber) {
+  // Send welcome email only to new subscribers who don't have an answer live yet
+  // (if their answer is already live, that email replaces the welcome context)
+  if (isNewSubscriber && !answerAlreadyApproved) {
     void sendWelcomeEmail(email, name)
   }
 

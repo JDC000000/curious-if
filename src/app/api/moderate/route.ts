@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/server'
 
 // STRICT check per TSD Task 11:
@@ -90,6 +91,28 @@ export async function POST(request: NextRequest) {
     await (supabase as any)
       .from('moderation_log')
       .insert({ answer_id: answerId, action: 'approve', openai_flagged: false })
+
+    // ISR revalidation — bust browse cache immediately
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: answerData } = await (supabase as any)
+        .from('answers')
+        .select('question:questions(published_at)')
+        .eq('id', answerId)
+        .single()
+
+      revalidatePath('/')
+      revalidatePath('/browse')
+      const publishedAt = answerData?.question?.published_at
+      if (publishedAt) {
+        const d = new Date(publishedAt)
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        revalidatePath(`/browse/${year}/${month}`)
+      }
+    } catch {
+      // Non-fatal
+    }
 
     // Fire-and-forget OG image generation (Phase 3)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'

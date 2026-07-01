@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 
-type State = 'idle' | 'confirm' | 'sending' | 'done' | 'error'
+type State = 'idle' | 'loading-preview' | 'preview' | 'sending' | 'done' | 'error'
+
+interface PreviewData {
+  question: { text: string; whisper_line: string | null; accent_colour: string }
+  monthLabel: string
+  subscriberCount: number
+}
 
 interface BroadcastResult {
   sent: number
@@ -13,8 +19,30 @@ interface BroadcastResult {
 
 export default function BroadcastButton({ activeCount }: { activeCount: number }) {
   const [state, setState] = useState<State>('idle')
+  const [preview, setPreview] = useState<PreviewData | null>(null)
   const [result, setResult] = useState<BroadcastResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+
+  const loadPreview = async () => {
+    setState('loading-preview')
+    setErrorMsg('')
+
+    try {
+      const res = await fetch('/api/admin/broadcast')
+      const data = await res.json()
+
+      if (res.ok) {
+        setPreview(data)
+        setState('preview')
+      } else {
+        setErrorMsg(data.error ?? 'Could not load preview.')
+        setState('error')
+      }
+    } catch {
+      setErrorMsg('Network error. Please try again.')
+      setState('error')
+    }
+  }
 
   const send = async () => {
     setState('sending')
@@ -37,6 +65,7 @@ export default function BroadcastButton({ activeCount }: { activeCount: number }
     }
   }
 
+  // ── Done ──────────────────────────────────────────────────────────────────
   if (state === 'done' && result) {
     return (
       <div
@@ -58,60 +87,132 @@ export default function BroadcastButton({ activeCount }: { activeCount: number }
     )
   }
 
-  if (state === 'confirm') {
+  // ── Preview ───────────────────────────────────────────────────────────────
+  if (state === 'preview' && preview) {
+    const accent = preview.question.accent_colour ?? '#3D5A8C'
+    const questionPreview = preview.question.text.length > 80
+      ? preview.question.text.slice(0, 77) + '…'
+      : preview.question.text
+
     return (
       <div
         style={{
-          backgroundColor: '#FFFBEB',
-          border: '1px solid #FDE68A',
+          border: '1px solid #E0D9C8',
           borderRadius: '12px',
-          padding: '20px 24px',
+          overflow: 'hidden',
         }}
       >
-        <p style={{ fontFamily: 'var(--font-ui)', fontSize: '14px', fontWeight: 600, color: '#92400E', margin: '0 0 8px' }}>
-          Send broadcast to {activeCount} active {activeCount === 1 ? 'subscriber' : 'subscribers'}?
-        </p>
-        <p style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: '#B45309', margin: '0 0 20px', lineHeight: 1.5 }}>
-          This will email the current featured question to your entire list. Make sure the question is live and ready.
-        </p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={send}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#1A1A1A',
-              color: '#F8F3E9',
-              border: 'none',
-              borderRadius: '6px',
+        {/* Accent stripe */}
+        <div style={{ height: '4px', backgroundColor: accent }} />
+
+        <div style={{ padding: '20px 24px' }}>
+          {/* Month + label */}
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#9A9A9A',
+            margin: '0 0 8px',
+          }}>
+            {preview.monthLabel} · curious if
+          </p>
+
+          {/* Subject */}
+          <p style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '11px',
+            fontWeight: 600,
+            color: '#6B6B6B',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            margin: '0 0 6px',
+          }}>
+            Subject
+          </p>
+          <p style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '15px',
+            fontStyle: 'italic',
+            color: '#1A1A1A',
+            lineHeight: 1.4,
+            margin: '0 0 16px',
+          }}>
+            &ldquo;{questionPreview}&rdquo;
+          </p>
+
+          {preview.question.whisper_line && (
+            <p style={{
               fontFamily: 'var(--font-ui)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Yes, send it
-          </button>
-          <button
-            onClick={() => setState('idle')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: 'transparent',
-              color: '#9A9A9A',
-              border: '1px solid #E0D9C8',
-              borderRadius: '6px',
-              fontFamily: 'var(--font-ui)',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
+              fontSize: '12px',
+              color: '#6B6B6B',
+              margin: '0 0 16px',
+              lineHeight: 1.5,
+            }}>
+              {preview.question.whisper_line}
+            </p>
+          )}
+
+          {/* Recipient count */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: '#F8F3E9',
+            border: '1px solid #E0D9C8',
+            borderRadius: '6px',
+            padding: '6px 12px',
+            marginBottom: '20px',
+          }}>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', fontWeight: 600, color: '#1A1A1A' }}>
+              {preview.subscriberCount}
+            </span>
+            <span style={{ fontFamily: 'var(--font-ui)', fontSize: '13px', color: '#6B6B6B' }}>
+              {preview.subscriberCount === 1 ? 'subscriber' : 'subscribers'}
+            </span>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={send}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: accent,
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Send to {preview.subscriberCount} {preview.subscriberCount === 1 ? 'subscriber' : 'subscribers'} →
+            </button>
+            <button
+              onClick={() => setState('idle')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: 'transparent',
+                color: '#9A9A9A',
+                border: '1px solid #E0D9C8',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
+  // ── Idle / loading / error ────────────────────────────────────────────────
   return (
     <div>
       {state === 'error' && (
@@ -132,8 +233,8 @@ export default function BroadcastButton({ activeCount }: { activeCount: number }
       )}
 
       <button
-        onClick={() => setState('confirm')}
-        disabled={state === 'sending' || activeCount === 0}
+        onClick={loadPreview}
+        disabled={state === 'loading-preview' || state === 'sending' || activeCount === 0}
         style={{
           padding: '12px 24px',
           backgroundColor: activeCount === 0 ? '#E0D9C8' : '#B8902A',
@@ -143,12 +244,12 @@ export default function BroadcastButton({ activeCount }: { activeCount: number }
           fontFamily: 'var(--font-ui)',
           fontSize: '14px',
           fontWeight: 600,
-          cursor: activeCount === 0 || state === 'sending' ? 'not-allowed' : 'pointer',
-          opacity: state === 'sending' ? 0.7 : 1,
+          cursor: activeCount === 0 || state === 'loading-preview' ? 'not-allowed' : 'pointer',
+          opacity: state === 'loading-preview' ? 0.7 : 1,
           transition: 'opacity 150ms ease',
         }}
       >
-        {state === 'sending' ? 'Sending…' : `Send broadcast · ${activeCount} ${activeCount === 1 ? 'subscriber' : 'subscribers'}`}
+        {state === 'loading-preview' ? 'Loading preview…' : `Preview & send · ${activeCount} ${activeCount === 1 ? 'subscriber' : 'subscribers'}`}
       </button>
     </div>
   )

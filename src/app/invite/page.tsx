@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import SiteNav from '@/components/SiteNav'
+import HomeSubscribeStrip from '@/components/HomeSubscribeStrip'
 import Link from 'next/link'
 
 type State = 'idle' | 'sending' | 'sent' | 'error'
@@ -110,6 +111,20 @@ export default function InvitePage() {
               >
                 Browse answers
               </Link>
+            </div>
+
+            {/* Subscribe strip — the person sending the invite may want in too */}
+            <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid #E0D9C8' }}>
+              <p style={{
+                fontFamily: 'var(--font-serif)',
+                fontStyle: 'italic',
+                fontSize: '15px',
+                color: '#6B6B6B',
+                marginBottom: '16px',
+              }}>
+                Want next month&apos;s question in your inbox too?
+              </p>
+              <HomeSubscribeStrip accentColour="#1A1A1A" />
             </div>
           </div>
         ) : (

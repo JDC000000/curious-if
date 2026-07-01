@@ -161,6 +161,48 @@ curiousif.blog
 Unsubscribe: ${unsubscribeUrl}`
 }
 
+export async function GET() {
+  // Verify admin session
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
+
+  const { data: question } = await admin
+    .from('questions')
+    .select('id, text, whisper_line, accent_colour, published_at')
+    .eq('status', 'featured')
+    .single()
+
+  if (!question) {
+    return NextResponse.json({ error: 'No featured question' }, { status: 404 })
+  }
+
+  const { count } = await admin
+    .from('subscribers')
+    .select('id', { count: 'exact', head: true })
+    .is('unsubscribed_at', null)
+
+  const publishedDate = question.published_at ? new Date(question.published_at) : new Date()
+  const monthName = publishedDate.toLocaleString('en-GB', { month: 'long' }).toUpperCase()
+  const year = publishedDate.getFullYear()
+  const monthLabel = `${monthName} ${year}`
+
+  return NextResponse.json({
+    question: {
+      text: question.text,
+      whisper_line: question.whisper_line,
+      accent_colour: question.accent_colour,
+    },
+    monthLabel,
+    subscriberCount: count ?? 0,
+  })
+}
+
 export async function POST(request: NextRequest) {
   // Verify admin session
   const supabase = await createClient()
