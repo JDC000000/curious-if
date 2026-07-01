@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { rateGuard } from '@/lib/rateLimit'
 
 const MAX_BODY_LENGTH = 1500
 
 export async function POST(request: NextRequest) {
+  // 10 answers per IP per hour
+  const limited = await rateGuard(request, 'answers', 10, 3600)
+  if (limited) return limited
+
   let body: { questionId?: string; answerBody?: string; ref?: string }
   try {
     body = await request.json()

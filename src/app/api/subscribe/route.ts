@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
+import { rateGuard } from '@/lib/rateLimit'
+import { triggerReciprocalNotification } from '@/lib/reciprocalNotification'
 
 async function addToResendContacts(email: string, name?: string) {
   const apiKey = process.env.RESEND_API_KEY
@@ -159,6 +161,10 @@ function welcomeEmailHtml(firstName: string | null, unsubscribeUrl: string): str
 }
 
 export async function POST(request: NextRequest) {
+  // 3 subscribe attempts per IP per hour
+  const limited = await rateGuard(request, 'subscribe', 3, 3600)
+  if (limited) return limited
+
   let body: { email?: string; name?: string; city?: string; answerId?: string }
   try {
     body = await request.json()
@@ -249,6 +255,12 @@ export async function POST(request: NextRequest) {
   // (if their answer is already live, that email replaces the welcome context)
   if (isNewSubscriber && !answerAlreadyApproved) {
     void sendWelcomeEmail(email, name)
+  }
+
+  // Reciprocal notification — if this person was nominated for this question,
+  // notify the nominator they answered. Fire-and-forget.
+  if (answerId) {
+    void triggerReciprocalNotification(email, answerId, name ?? null)
   }
 
   return NextResponse.json({ success: true })

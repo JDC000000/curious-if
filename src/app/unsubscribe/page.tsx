@@ -10,7 +10,8 @@ type State = 'confirm' | 'loading' | 'done' | 'already' | 'error'
 function UnsubscribeForm() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email') ?? ''
-  const [state, setState] = useState<State>('confirm')
+  const isNotifications = searchParams.get('notifications') === '1'
+  const [state, setState] = useState<State>(isNotifications ? 'done' : 'confirm')
 
   // Auto-process if arriving from a one-click unsubscribe link
   const handleUnsubscribe = async () => {
@@ -168,7 +169,9 @@ function UnsubscribeForm() {
                   marginBottom: '32px',
                 }}
               >
-                {email} has been removed. You won't hear from us again.
+                {isNotifications
+                  ? "You won't receive notifications when someone you invited answers."
+                  : `${email} has been removed. You won't hear from us again.`}
               </p>
               <Link
                 href="/"

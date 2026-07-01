@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { createHmac } from 'crypto'
+import { rateGuard } from '@/lib/rateLimit'
 
 function blindIndex(email: string): string {
   return createHmac('sha256', process.env.BLIND_INDEX_SECRET!)
@@ -133,6 +134,10 @@ ${unsubscribeUrl}`
 }
 
 export async function POST(request: NextRequest) {
+  // 1 invite per IP per 5 minutes
+  const limited = await rateGuard(request, 'invite', 1, 300)
+  if (limited) return limited
+
   let body: { nomineeEmail?: string; personalNote?: string; nominatorName?: string }
   try {
     body = await request.json()
