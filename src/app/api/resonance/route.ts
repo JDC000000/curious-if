@@ -21,37 +21,17 @@ export async function POST(request: NextRequest) {
   // Use RPC-style increment to avoid race conditions
   const delta = action === 'add' ? 1 : -1
 
+  // Atomic increment via RPC (GREATEST(0, resonance_count + delta)) — the only
+  // safe path. No read-then-write fallback: two concurrent requests would both
+  // read N and write N+1, silently losing an increment.
   const { data, error } = await supabase.rpc('increment_resonance', {
     answer_id: answerId,
     delta,
   })
 
   if (error) {
-    // Fallback: manual update (in case RPC isn't deployed yet)
-    const { data: current } = await supabase
-      .from('answers')
-      .select('resonance_count')
-      .eq('id', answerId)
-      .single()
-
-    if (!current) {
-      return NextResponse.json({ error: 'Answer not found' }, { status: 404 })
-    }
-
-    const newCount = Math.max(0, (current.resonance_count ?? 0) + delta)
-
-    const { data: updated, error: updateError } = await supabase
-      .from('answers')
-      .update({ resonance_count: newCount })
-      .eq('id', answerId)
-      .select('resonance_count')
-      .single()
-
-    if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ count: updated.resonance_count })
+    console.error('increment_resonance RPC failed:', error)
+    return NextResponse.json({ error: 'Could not update resonance' }, { status: 500 })
   }
 
   return NextResponse.json({ count: data ?? 0 })

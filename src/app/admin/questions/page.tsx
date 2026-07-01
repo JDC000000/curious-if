@@ -36,9 +36,9 @@ async function getAllQuestions(): Promise<QuestionWithCount[]> {
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; colour: string }> = {
-  featured: { label: 'Featured', bg: '#F0FDF4', colour: '#2E6B45' },
-  draft:    { label: 'Draft',    bg: '#FFFBEB', colour: '#92400E' },
-  published:{ label: 'Published',bg: '#F0F4FF', colour: '#3D5A8C' },
+  spotlight: { label: 'Spotlight', bg: '#F0FDF4', colour: '#2E6B45' },
+  draft:     { label: 'Draft',     bg: '#FFFBEB', colour: '#92400E' },
+  published: { label: 'Published', bg: '#F0F4FF', colour: '#3D5A8C' },
 }
 
 export default async function AdminQuestionsPage() {

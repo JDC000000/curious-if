@@ -26,17 +26,25 @@ export async function proxy(request: NextRequest) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
+  const { pathname } = request.nextUrl
 
-  if (request.nextUrl.pathname.startsWith('/admin') &&
-      !request.nextUrl.pathname.startsWith('/admin/login') &&
-      !request.nextUrl.pathname.startsWith('/admin/auth') &&
-      !user) {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
+  if (!user) {
+    // Admin API routes: 401 (defense-in-depth — routes also check, but a new
+    // route that forgets the check must not be left open).
+    if (pathname.startsWith('/api/admin')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    // Admin pages: redirect to login (except the login/auth routes themselves).
+    if (pathname.startsWith('/admin') &&
+        !pathname.startsWith('/admin/login') &&
+        !pathname.startsWith('/admin/auth')) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
   }
 
   return response
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 }

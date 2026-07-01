@@ -8,8 +8,8 @@ import { createHmac, timingSafeEqual } from 'crypto'
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 days
 
 function getSecret(): string {
-  const s = process.env.UNSUBSCRIBE_JWT_SECRET
-  if (!s) throw new Error('UNSUBSCRIBE_JWT_SECRET is not set')
+  const s = process.env.NOTIFICATION_TOKEN_SECRET
+  if (!s) throw new Error('NOTIFICATION_TOKEN_SECRET is not set')
   return s
 }
 

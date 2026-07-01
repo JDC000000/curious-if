@@ -14,8 +14,8 @@ import { blindIndex } from '@/lib/crypto'
 const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000 // 1 year — unsubscribe links must stay valid
 
 function getSecret(): string {
-  const s = process.env.UNSUBSCRIBE_JWT_SECRET
-  if (!s) throw new Error('UNSUBSCRIBE_JWT_SECRET is not set')
+  const s = process.env.UNSUBSCRIBE_TOKEN_SECRET
+  if (!s) throw new Error('UNSUBSCRIBE_TOKEN_SECRET is not set')
   return s
 }
 
