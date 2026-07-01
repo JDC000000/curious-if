@@ -83,10 +83,10 @@ async function sendInviteEmail({
 
           <tr>
             <td style="padding-top:32px;">
-              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9A9A9A;margin:0;line-height:1.6;">
-                One question per month at <a href="https://curiousif.blog" style="color:#9A9A9A;">curiousif.blog</a>.
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6E6E6E;margin:0;line-height:1.6;">
+                One question per month at <a href="https://curiousif.blog" style="color:#6E6E6E;">curiousif.blog</a>.
                 <br />
-                <a href="${unsubscribeUrl}" style="color:#9A9A9A;">Don't want invitations like this?</a>
+                <a href="${unsubscribeUrl}" style="color:#6E6E6E;">Don't want invitations like this?</a>
               </p>
             </td>
           </tr>

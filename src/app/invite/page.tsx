@@ -210,7 +210,7 @@ export default function InvitePage() {
                   }}
                 >
                   Personal note{' '}
-                  <span style={{ fontWeight: 400, color: '#9A9A9A' }}>optional</span>
+                  <span style={{ fontWeight: 400, color: '#6E6E6E' }}>optional</span>
                 </label>
                 <textarea
                   id="personal-note"
@@ -237,7 +237,7 @@ export default function InvitePage() {
                   style={{
                     fontFamily: 'var(--font-mono)',
                     fontSize: '11px',
-                    color: note.length > 180 ? '#DC2626' : '#9A9A9A',
+                    color: note.length > 180 ? '#DC2626' : '#6E6E6E',
                     textAlign: 'right',
                     marginTop: '4px',
                   }}

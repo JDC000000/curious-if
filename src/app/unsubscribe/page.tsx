@@ -114,7 +114,7 @@ function UnsubscribeForm() {
                   width: '100%',
                   padding: '14px 24px',
                   backgroundColor: token ? '#1A1A1A' : '#E0D9C8',
-                  color: token ? '#F8F3E9' : '#9A9A9A',
+                  color: token ? '#F8F3E9' : '#6E6E6E',
                   border: 'none',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
@@ -132,7 +132,7 @@ function UnsubscribeForm() {
                   display: 'block',
                   fontFamily: 'var(--font-ui)',
                   fontSize: '14px',
-                  color: '#9A9A9A',
+                  color: '#6E6E6E',
                   textDecoration: 'none',
                 }}
               >
@@ -179,7 +179,7 @@ function UnsubscribeForm() {
                 style={{
                   fontFamily: 'var(--font-ui)',
                   fontSize: '14px',
-                  color: '#9A9A9A',
+                  color: '#6E6E6E',
                   textDecoration: 'none',
                 }}
               >

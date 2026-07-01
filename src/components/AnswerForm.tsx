@@ -110,7 +110,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
     ? '#DC2626'
     : isNearLimit
     ? '#B8902A'
-    : '#9A9A9A'
+    : '#6E6E6E'
 
   // Success state + modal
   if (formState === 'success') {
@@ -285,7 +285,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
                     border: 'none',
                     fontFamily: 'var(--font-ui)',
                     fontSize: '13px',
-                    color: '#9A9A9A',
+                    color: '#6E6E6E',
                     cursor: 'pointer',
                     padding: '12px 0',
                   }}
@@ -449,7 +449,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
           style={{
             padding: '14px 32px',
             backgroundColor: canSubmit ? '#C4703A' : '#E0D9C8', // primary answer CTA — operator brand spec
-            color: canSubmit ? '#FFFFFF' : '#9A9A9A',
+            color: canSubmit ? '#FFFFFF' : '#6E6E6E',
             border: 'none',
             borderRadius: '8px',
             fontFamily: 'var(--font-ui)',
@@ -465,7 +465,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
           style={{
             fontFamily: 'var(--font-ui)',
             fontSize: '13px',
-            color: '#9A9A9A',
+            color: '#6E6E6E',
           }}
         >
           Reviewed before publishing
@@ -487,7 +487,7 @@ const labelStyle: React.CSSProperties = {
 
 const optionalStyle: React.CSSProperties = {
   fontWeight: 400,
-  color: '#9A9A9A',
+  color: '#6E6E6E',
   marginLeft: '6px',
   fontSize: '12px',
 }

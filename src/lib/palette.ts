@@ -5,7 +5,7 @@ export const BASE = {
   ink:         '#1A1A1A',
   inkSoft:     '#3D3D3D',
   inkMuted:    '#6B6B6B',
-  inkFaint:    '#9A9A9A',
+  inkFaint:    '#6E6E6E',
   white:       '#FFFFFF',
 }
 

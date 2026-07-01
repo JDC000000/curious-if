@@ -229,7 +229,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               style={{
                 fontFamily: 'var(--font-ui)',
                 fontSize: '13px',
-                color: '#9A9A9A',
+                color: '#6E6E6E',
                 textDecoration: 'none',
                 letterSpacing: '0.02em',
               }}

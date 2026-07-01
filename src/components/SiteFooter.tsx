@@ -43,7 +43,7 @@ export default function SiteFooter() {
             style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '13px',
-              color: '#9A9A9A',
+              color: '#6E6E6E',
               textDecoration: 'none',
             }}
           >
@@ -59,7 +59,7 @@ export default function SiteFooter() {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              color: '#9A9A9A',
+              color: '#6E6E6E',
               textDecoration: 'none',
               transition: 'color 150ms ease',
             }}

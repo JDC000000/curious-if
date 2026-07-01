@@ -66,7 +66,7 @@ export default function HomeSubscribeStrip({ accentColour }: HomeSubscribeStripP
       <p style={{
         fontFamily: 'var(--font-ui)',
         fontSize: '13px',
-        color: '#9A9A9A',
+        color: '#6E6E6E',
         marginBottom: '12px',
         letterSpacing: '0.02em',
       }}>
@@ -110,7 +110,7 @@ export default function HomeSubscribeStrip({ accentColour }: HomeSubscribeStripP
           disabled={state === 'submitting' || !email.trim()}
           style={{
             padding: '10px 20px',
-            backgroundColor: state === 'submitting' ? '#9A9A9A' : accentColour,
+            backgroundColor: state === 'submitting' ? '#6E6E6E' : accentColour,
             color: '#FFFFFF',
             border: 'none',
             borderRadius: '8px',

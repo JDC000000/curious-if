@@ -164,7 +164,7 @@ export default async function ArchivePage() {
                         style={{
                           fontFamily: 'var(--font-ui)',
                           fontSize: '13px',
-                          color: '#9A9A9A',
+                          color: '#6E6E6E',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '8px',

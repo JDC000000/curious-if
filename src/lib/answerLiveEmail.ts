@@ -88,7 +88,7 @@ export async function sendAnswerLiveEmail(
               </div>
               <div>
                 <a href="${browseUrl}"
-                  style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9A9A9A;text-decoration:none;">
+                  style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6E6E6E;text-decoration:none;">
                   Browse all answers
                 </a>
               </div>
@@ -97,10 +97,10 @@ export async function sendAnswerLiveEmail(
 
           <tr>
             <td style="padding-top:32px;">
-              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9A9A9A;margin:0;line-height:1.6;">
-                curious if · <a href="${SITE}" style="color:#9A9A9A;">${SITE.replace('https://', '')}</a>
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6E6E6E;margin:0;line-height:1.6;">
+                curious if · <a href="${SITE}" style="color:#6E6E6E;">${SITE.replace('https://', '')}</a>
                 <br />
-                <a href="${unsubscribeUrl}" style="color:#9A9A9A;">Unsubscribe</a>
+                <a href="${unsubscribeUrl}" style="color:#6E6E6E;">Unsubscribe</a>
               </p>
             </td>
           </tr>

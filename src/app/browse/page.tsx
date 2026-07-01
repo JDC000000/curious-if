@@ -208,7 +208,7 @@ export default async function BrowsePage() {
                 fontFamily: 'var(--font-serif)',
                 fontStyle: 'italic',
                 fontSize: '15px',
-                color: '#9A9A9A',
+                color: '#6E6E6E',
                 marginBottom: '32px',
               }}
             >
@@ -278,7 +278,7 @@ export default async function BrowsePage() {
                           style={{
                             fontFamily: 'var(--font-ui)',
                             fontSize: '12px',
-                            color: '#9A9A9A',
+                            color: '#6E6E6E',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',

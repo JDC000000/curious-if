@@ -37,7 +37,7 @@ export default function NotFound() {
           fontWeight: 500,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
-          color: '#9A9A9A',
+          color: '#6E6E6E',
           marginBottom: '24px',
         }}
       >
@@ -64,7 +64,7 @@ export default function NotFound() {
           fontStyle: 'italic',
           fontSize: '18px',
           fontWeight: 300,
-          color: '#9A9A9A',
+          color: '#6E6E6E',
           marginBottom: '48px',
         }}
       >

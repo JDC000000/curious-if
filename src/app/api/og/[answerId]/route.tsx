@@ -190,7 +190,7 @@ function AnswerCard({
             style={{
               fontFamily: 'monospace',
               fontSize: '14px',
-              color: '#9A9A9A',
+              color: '#6E6E6E',
               letterSpacing: '0.05em',
             }}
           >
@@ -222,7 +222,7 @@ function FallbackCard() {
       <div style={{ marginTop: '16px', fontSize: '20px', color: '#6B6B6B', fontStyle: 'italic' }}>
         One question. Once a month.
       </div>
-      <div style={{ marginTop: '32px', fontFamily: 'monospace', fontSize: '14px', color: '#9A9A9A', letterSpacing: '0.08em' }}>
+      <div style={{ marginTop: '32px', fontFamily: 'monospace', fontSize: '14px', color: '#6E6E6E', letterSpacing: '0.08em' }}>
         CURIOUSIF.BLOG
       </div>
     </div>

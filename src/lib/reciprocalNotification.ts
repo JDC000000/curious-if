@@ -64,7 +64,7 @@ async function sendReciprocalNotificationEmail({
 
           <tr>
             <td style="padding-bottom:40px;">
-              <span style="font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#9A9A9A;">
+              <span style="font-family:'Courier New',Courier,monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E6E;">
                 ${monthLabel}
               </span>
             </td>
@@ -104,7 +104,7 @@ async function sendReciprocalNotificationEmail({
               </div>
               <div>
                 <a href="${browseUrl}"
-                  style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#9A9A9A;text-decoration:none;">
+                  style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6E6E6E;text-decoration:none;">
                   Browse all answers
                 </a>
               </div>
@@ -114,11 +114,11 @@ async function sendReciprocalNotificationEmail({
 
           <tr>
             <td style="padding-top:32px;">
-              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9A9A9A;margin:0;line-height:1.8;">
+              <p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#6E6E6E;margin:0;line-height:1.8;">
                 You received this because you passed the question to someone at
-                <a href="${SITE}" style="color:#9A9A9A;">curiousif.blog</a>.
+                <a href="${SITE}" style="color:#6E6E6E;">curiousif.blog</a>.
                 <br />
-                <a href="${unsubUrl}" style="color:#9A9A9A;">Stop these notifications</a>
+                <a href="${unsubUrl}" style="color:#6E6E6E;">Stop these notifications</a>
               </p>
             </td>
           </tr>
