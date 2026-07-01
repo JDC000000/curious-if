@@ -13,6 +13,7 @@ interface PageProps {
 
 async function getQuestionForMonth(year: number, month: number): Promise<{
   question: Question | null
+  heroAnswers: Answer[]
   answers: Answer[]
 }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,17 +31,36 @@ async function getQuestionForMonth(year: number, month: number): Promise<{
     .lt('published_at', endDate)
     .single()
 
-  if (!question) return { question: null, answers: [] }
+  if (!question) return { question: null, heroAnswers: [], answers: [] }
 
-  const { data: answers } = await supabase
-    .from('answers')
-    .select('*')
-    .eq('question_id', (question as Question).id)
-    .eq('status', 'approved')
-    .order('approved_at', { ascending: false })
-    .limit(100)
+  const qId = (question as Question).id
 
-  return { question: question as Question, answers: (answers ?? []) as Answer[] }
+  const [heroResult, answersResult] = await Promise.all([
+    // Curator picks — archive headlines shown as hero cards
+    supabase
+      .from('answers')
+      .select('*')
+      .eq('question_id', qId)
+      .eq('status', 'approved')
+      .eq('archive_headline', true)
+      .order('approved_at', { ascending: false }),
+
+    // All approved answers (non-hero grid)
+    supabase
+      .from('answers')
+      .select('*')
+      .eq('question_id', qId)
+      .eq('status', 'approved')
+      .eq('archive_headline', false)
+      .order('approved_at', { ascending: false })
+      .limit(100),
+  ])
+
+  return {
+    question: question as Question,
+    heroAnswers: (heroResult.data ?? []) as Answer[],
+    answers: (answersResult.data ?? []) as Answer[],
+  }
 }
 
 export default async function MonthBrowsePage({ params }: PageProps) {
@@ -52,7 +72,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
     notFound()
   }
 
-  const { question, answers } = await getQuestionForMonth(year, month)
+  const { question, heroAnswers, answers } = await getQuestionForMonth(year, month)
 
   if (!question) {
     notFound()
@@ -143,7 +163,80 @@ export default async function MonthBrowsePage({ params }: PageProps) {
           </div>
         </div>
 
-        {answers.length > 0 && (
+        {/* ── Curator picks (archive headlines) ──────────────────── */}
+        {heroAnswers.length > 0 && (
+          <div style={{ marginBottom: '48px' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10px',
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: accentColour,
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>★</span> Curator&rsquo;s picks
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '16px',
+                alignItems: 'start',
+                marginBottom: '40px',
+              }}
+            >
+              {heroAnswers.map(a => (
+                <Link key={a.id} href={`/answers/${a.id}`} style={{ textDecoration: 'none' }}>
+                  <div
+                    style={{
+                      backgroundColor: '#FFFEF8',
+                      border: `1.5px solid ${accentColour}33`,
+                      borderRadius: '10px',
+                      padding: '20px 22px',
+                      boxShadow: `0 2px 12px rgba(26,26,46,0.07)`,
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        fontStyle: 'italic',
+                        fontSize: '15px',
+                        lineHeight: 1.65,
+                        color: '#1A1A1A',
+                        marginBottom: '12px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 5,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      &ldquo;{a.body}&rdquo;
+                    </p>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-ui)',
+                        fontSize: '12px',
+                        color: accentColour,
+                        fontWeight: 500,
+                      }}
+                    >
+                      Read →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <div style={{ height: '1px', backgroundColor: '#E0D9C8', marginBottom: '40px' }} />
+          </div>
+        )}
+
+        {(heroAnswers.length > 0 ? answers : [...heroAnswers, ...answers]).length > 0 && (
           <div
             style={{
               fontFamily: 'var(--font-ui)',
@@ -152,7 +245,8 @@ export default async function MonthBrowsePage({ params }: PageProps) {
               marginBottom: '32px',
             }}
           >
-            {answers.length} {answers.length === 1 ? 'answer' : 'answers'}
+            {answers.length + heroAnswers.length} {(answers.length + heroAnswers.length) === 1 ? 'answer' : 'answers'} total
+            {heroAnswers.length > 0 && ` · ${heroAnswers.length} curator ${heroAnswers.length === 1 ? 'pick' : 'picks'}`}
           </div>
         )}
 

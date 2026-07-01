@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics/react'
 import SiteNav from '@/components/SiteNav'
 import HomeSubscribeStrip from '@/components/HomeSubscribeStrip'
 import Link from 'next/link'
@@ -30,6 +31,7 @@ export default function InvitePage() {
 
       if (res.ok) {
         setState('sent')
+        track('nomination_sent')
       } else {
         const data = await res.json()
         setErrorMsg(data.error ?? 'Something went wrong.')

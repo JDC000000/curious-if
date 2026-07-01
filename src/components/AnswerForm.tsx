@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics/react'
 
 const MAX_LENGTH = 1500
 const WARN_LENGTH = 1400
@@ -57,6 +58,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
       setAnswerId(data.id)
       setFormState('success')
       setModal('shown')
+      track('answer_submitted')
     } catch {
       setErrorMsg('Connection error. Please try again.')
       setFormState('error')

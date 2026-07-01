@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Fraunces, Hanken_Grotesk, IBM_Plex_Mono } from 'next/font/google'
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/react'
 import SiteFooter from '@/components/SiteFooter'
 import './globals.css'
 
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F8F3E9] text-[#1A1A1A]">
         {children}
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   )

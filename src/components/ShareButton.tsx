@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics/react'
 
 interface ShareButtonProps {
   url: string
@@ -12,6 +13,8 @@ export default function ShareButton({ url, text, accentColour = '#3D5A8C' }: Sha
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
+    track('share_clicked')
+
     // Try native Web Share API first (iOS, Android, some desktop)
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
