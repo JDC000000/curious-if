@@ -242,3 +242,39 @@ See `.github/workflows/ci.yml`.
    Missing token secrets cause those flows to throw.
 4. **Security headers** ship via `next.config.ts` `headers()` (CSP, XFO, etc.).
    Verify nothing is CSP-blocked in production (Plausible, Supabase, fonts).
+
+---
+
+## Live Deployment (production)
+
+| Item | Value |
+|------|-------|
+| Live URL | https://curiousif.blog (`www` → apex redirect) |
+| Hosting | Vercel — team `jdci-nc` (JDCInc), project **`curious-if`** (`prj_lSJOjY0dHq7j8sYHqynGlyzu1bVT`) |
+| Supabase project | **`mqiwhmphrhpsvwzwcoix`** — https://mqiwhmphrhpsvwzwcoix.supabase.co |
+| DNS | Cloudflare → Vercel (apex `A 76.76.21.21`, `www` CNAME). Vercel-managed SSL. |
+| Admin | https://curiousif.blog/admin — OTP magic link to `ADMIN_EMAIL` (joncartwright00@gmail.com); `shouldCreateUser:false`, no public signup. Admin user pre-provisioned + confirmed in `auth.users`. |
+
+**Migrations:** 001–011 all applied and recorded in
+`supabase_migrations.schema_migrations` (verified by schema inspection). 009
+(featured→spotlight), 010 (PII encryption / drop plaintext / opaque tokens) and
+011 (rate_limit_log RLS + revoke SECURITY DEFINER from anon) were applied at
+deploy time — earlier runs had left them unapplied.
+
+**Realtime:** `answers` is in the `supabase_realtime` publication with
+`REPLICA IDENTITY FULL` (RealtimeGrid reads `payload.old.status`). This is deploy
+config, **not** a migration — re-apply if the DB is rebuilt.
+
+**Deploy trigger:** git-push auto-deploys are currently **BLOCKED** on this Vercel
+Hobby team (readyState=BLOCKED, no error). Deploy via the Vercel API
+(`POST /v13/deployments?forceNew=1`, `gitSource` `ref=main`) — those build READY.
+Root cause of the git-integration block is unresolved; investigate in the Vercel dashboard.
+
+**Operator TODO (cannot be done by agent):**
+- **Disable email signups** in Supabase → Authentication → Providers → Email →
+  "Allow new users to sign up" **OFF** (H-1 belt-and-braces; code already enforces
+  admin-only, but `disable_signup` is currently `false`). Requires dashboard or a
+  Supabase Management API token (`sbp_…`), which is not in the credential store.
+- **Add `.github/workflows/ci.yml`** — the deploy PAT has `repo` scope only (no
+  `workflow`), so an agent cannot push workflow files. Add via the GitHub UI or a
+  `workflow`-scoped token.
