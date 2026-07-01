@@ -47,7 +47,7 @@ export default async function AdminQuestionsPage() {
   if (!user) redirect('/admin/login')
 
   const questions = await getAllQuestions()
-  const featured = questions.filter(q => q.status === 'featured')
+  const featured = questions.filter(q => q.status === 'spotlight')
   const drafts    = questions.filter(q => q.status === 'draft')
   const published = questions.filter(q => q.status === 'published')
 

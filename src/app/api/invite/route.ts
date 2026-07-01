@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
   const { data: question } = await supabase
     .from('questions')
     .select('id, text')
-    .eq('status', 'featured')
+    .eq('status', 'spotlight')
     .single()
 
   if (!question) {

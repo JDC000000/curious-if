@@ -26,7 +26,7 @@ async function getQuestionForMonth(year: number, month: number): Promise<{
   const { data: question } = await supabase
     .from('questions')
     .select('*')
-    .in('status', ['featured', 'published'])
+    .in('status', ['spotlight', 'published'])
     .gte('published_at', startDate)
     .lt('published_at', endDate)
     .single()

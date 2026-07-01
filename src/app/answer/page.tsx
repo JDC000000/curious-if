@@ -20,7 +20,7 @@ async function getQuestion(questionId?: string): Promise<Question | null> {
       .from('questions')
       .select('*')
       .eq('id', questionId)
-      .in('status', ['featured', 'published'])
+      .in('status', ['spotlight', 'published'])
       .single()
     return data as Question | null
   }
@@ -29,7 +29,7 @@ async function getQuestion(questionId?: string): Promise<Question | null> {
   const { data } = await supabase
     .from('questions')
     .select('*')
-    .eq('status', 'featured')
+    .eq('status', 'spotlight')
     .single()
   return data as Question | null
 }

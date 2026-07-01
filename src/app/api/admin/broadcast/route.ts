@@ -175,11 +175,11 @@ export async function GET() {
   const { data: question } = await admin
     .from('questions')
     .select('id, text, whisper_line, accent_colour, published_at')
-    .eq('status', 'featured')
+    .eq('status', 'spotlight')
     .single()
 
   if (!question) {
-    return NextResponse.json({ error: 'No featured question' }, { status: 404 })
+    return NextResponse.json({ error: 'No spotlight question' }, { status: 404 })
   }
 
   const { count } = await admin
@@ -223,11 +223,11 @@ export async function POST(request: NextRequest) {
   const { data: question } = await admin
     .from('questions')
     .select('id, text, whisper_line, accent_colour, published_at')
-    .eq('status', 'featured')
+    .eq('status', 'spotlight')
     .single()
 
   if (!question) {
-    return NextResponse.json({ error: 'No featured question to broadcast' }, { status: 404 })
+    return NextResponse.json({ error: 'No spotlight question to broadcast' }, { status: 404 })
   }
 
   // Get all active subscribers with their names

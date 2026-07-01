@@ -27,6 +27,10 @@ export default function RealtimeGrid({
   const [sort, setSort] = useState<SortMode>('newest')
   const queueRef = useRef<Answer[]>([])
   const processingRef = useRef(false)
+  // Dedup: ids we've already accepted (server-rendered + realtime). Prevents the
+  // same answer being enqueued twice when Supabase delivers duplicate UPDATE
+  // events within the 2s throttle window (AGENTS.md #7 — seenIds dedup).
+  const seenIdsRef = useRef<Set<string>>(new Set(initialAnswers.map(a => a.id)))
 
   const processQueue = () => {
     if (queueRef.current.length === 0) {
@@ -68,13 +72,12 @@ export default function RealtimeGrid({
 
           // Only show when newly approved — never broadcast pending/rejected
           if (newRow.status === 'approved' && oldRow.status !== 'approved') {
-            // Don't show if already in list
-            setAnswers(prev => {
-              if (prev.some(a => a.id === newRow.id)) return prev
-              queueRef.current.push(newRow)
-              if (!processingRef.current) processQueue()
-              return prev
-            })
+            // Dedup at ingest time (before the 2s-throttled queue drains) so
+            // duplicate realtime events for the same answer are never shown twice.
+            if (seenIdsRef.current.has(newRow.id)) return
+            seenIdsRef.current.add(newRow.id)
+            queueRef.current.push(newRow)
+            if (!processingRef.current) processQueue()
           }
         }
       )

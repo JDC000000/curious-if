@@ -99,7 +99,7 @@ function UnsubscribeForm() {
                   }}
                 >
                   Remove <strong style={{ color: '#3D3D3D' }}>{email}</strong> from the curious if list.
-                  You won't hear from us again.
+                  You won&apos;t hear from us again.
                 </p>
               ) : (
                 <p style={{ fontFamily: 'var(--font-ui)', fontSize: '15px', color: '#DC2626', marginBottom: '32px' }}>
@@ -209,7 +209,7 @@ function UnsubscribeForm() {
                   marginBottom: '32px',
                 }}
               >
-                Reply to any email from us with "unsubscribe" and we'll remove you immediately.
+                Reply to any email from us with &quot;unsubscribe&quot; and we&apos;ll remove you immediately.
               </p>
               <button
                 onClick={handleUnsubscribe}

@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const { data } = await supabase
       .from('questions')
       .select('published_at, created_at')
-      .in('status', ['featured', 'published'])
+      .in('status', ['spotlight', 'published'])
       .order('published_at', { ascending: false })
 
     const monthRoutes: MetadataRoute.Sitemap = (data ?? []).map((q: Pick<Question, 'published_at' | 'created_at'>) => {

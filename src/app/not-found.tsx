@@ -56,7 +56,7 @@ export default function NotFound() {
           marginBottom: '12px',
         }}
       >
-        This page doesn't exist.
+        This page doesn&apos;t exist.
       </p>
       <p
         style={{

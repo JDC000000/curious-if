@@ -24,7 +24,7 @@ function NewQuestionForm() {
   // Load existing draft when in edit mode
   useEffect(() => {
     if (!editId) return
-    setLoadingEdit(true)
+    // loadingEdit is already initialised to true when editId is present (see useState above)
     fetch(`/api/admin/questions?id=${editId}`)
       .then(r => r.json())
       .then(data => {

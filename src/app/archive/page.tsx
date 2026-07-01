@@ -15,7 +15,7 @@ async function getArchive(): Promise<QuestionWithCount[]> {
   const { data } = await supabase
     .from('questions')
     .select('*')
-    .in('status', ['published', 'featured'])
+    .in('status', ['published', 'spotlight'])
     .order('published_at', { ascending: false })
 
   if (!data) return []
@@ -92,7 +92,7 @@ export default async function ArchivePage() {
               const monthName = date.toLocaleString('en-GB', { month: 'long' })
               const year = date.getFullYear()
               const href = `/browse/${year}/${String(date.getMonth() + 1).padStart(2, '0')}`
-              const isFeatured = q.status === 'featured'
+              const isFeatured = q.status === 'spotlight'
 
               return (
                 <Link

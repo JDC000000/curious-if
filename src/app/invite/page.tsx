@@ -76,7 +76,7 @@ export default function InvitePage() {
                 marginBottom: '40px',
               }}
             >
-              They'll get the question and a note to write their answer.
+              They&apos;ll get the question and a note to write their answer.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
@@ -154,7 +154,7 @@ export default function InvitePage() {
                   lineHeight: 1.6,
                 }}
               >
-                Know someone whose answer you'd want to read? Send them this month's question.
+                Know someone whose answer you&apos;d want to read? Send them this month&apos;s question.
               </p>
             </div>
 

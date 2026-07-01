@@ -19,7 +19,7 @@ async function getFeaturedData(): Promise<{
   const { data: question } = await supabase
     .from('questions')
     .select('*')
-    .eq('status', 'featured')
+    .eq('status', 'spotlight')
     .single()
 
   const answersQuery = question

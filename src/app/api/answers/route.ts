@@ -35,13 +35,13 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
-  // Verify the question exists and accepts answers (featured OR published — NOT draft)
+  // Verify the question exists and accepts answers (spotlight OR published — NOT draft)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: question, error: questionError } = await (supabase as any)
     .from('questions')
     .select('id, status')
     .eq('id', questionId)
-    .in('status', ['featured', 'published'])
+    .in('status', ['spotlight', 'published'])
     .single()
 
   if (questionError || !question) {

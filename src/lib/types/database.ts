@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type QuestionStatus = 'draft' | 'featured' | 'published'
+export type QuestionStatus = 'draft' | 'spotlight' | 'published'
 export type AnswerStatus = 'pending' | 'approved' | 'rejected'
 export type ModerationAction = 'approve' | 'reject'
 

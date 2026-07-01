@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Accent colour is required' }, { status: 400 })
   }
 
-  if (!['draft', 'featured', 'published'].includes(status)) {
+  if (!['draft', 'spotlight', 'published'].includes(status)) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { track } from '@vercel/analytics/react'
 
 const MAX_LENGTH = 1500
@@ -296,12 +297,12 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
 
         {modal === 'done' && (
           <div style={{ textAlign: 'center', padding: '24px', color: '#6B6B6B', fontFamily: 'var(--font-ui)', fontSize: '14px' }}>
-            <a
+            <Link
               href="/browse"
               style={{ color: accentColour, textDecoration: 'none', fontWeight: 600 }}
             >
               Browse other answers →
-            </a>
+            </Link>
           </div>
         )}
       </div>

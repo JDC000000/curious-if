@@ -62,6 +62,8 @@ export default function CueCard({
     if (!answerId) return
     try {
       const stored = localStorage.getItem(`resonated_${answerId}`)
+      // Syncing external state (localStorage) into React on mount — SSR-safe pattern.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored === '1') setResonated(true)
     } catch {
       // localStorage unavailable (private browsing etc.) — fine
