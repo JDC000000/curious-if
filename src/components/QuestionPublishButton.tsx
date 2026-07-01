@@ -57,7 +57,7 @@ export default function QuestionPublishButton({ questionId, accentColour }: Ques
         )}
         <button
           onClick={publish}
-          disabled={state === 'publishing'}
+          disabled={false}
           style={{
             padding: '5px 10px',
             backgroundColor: accentColour,
@@ -70,7 +70,7 @@ export default function QuestionPublishButton({ questionId, accentColour }: Ques
             cursor: 'pointer',
           }}
         >
-          {state === 'publishing' ? 'Publishing…' : 'Confirm'}
+          Confirm
         </button>
         <button
           onClick={() => setState('idle')}
