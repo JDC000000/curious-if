@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { decrypt, decryptEmail } from '@/lib/crypto'
+import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 
 interface Question {
   id: string
@@ -24,7 +26,7 @@ function broadcastEmailHtml({
   subscriber: Subscriber
 }): string {
   const greeting = subscriber.name ? `Hi ${subscriber.name.split(' ')[0]},` : 'Hi,'
-  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(subscriber.email)}`
+  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(subscriber.email)}`
   const browseUrl = `https://curiousif.blog/browse`
   const answerUrl = `https://curiousif.blog/answer`
   const accentColour = question.accent_colour ?? '#3D5A8C'
@@ -142,7 +144,7 @@ function broadcastEmailText({
   subscriber: Subscriber
 }): string {
   const greeting = subscriber.name ? `Hi ${subscriber.name.split(' ')[0]},` : 'Hi,'
-  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(subscriber.email)}`
+  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(subscriber.email)}`
 
   return `${greeting} This month's question:
 
@@ -230,10 +232,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No spotlight question to broadcast' }, { status: 404 })
   }
 
-  // Get all active subscribers with their names
+  // Get all active subscribers with their names (encrypted at rest)
   const { data: subscribers } = await admin
     .from('subscribers')
-    .select('email, submitter:submitters(name)')
+    .select('email_encrypted, submitter:submitters(name_encrypted)')
     .is('unsubscribed_at', null)
 
   if (!subscribers || subscribers.length === 0) {
@@ -250,15 +252,17 @@ export async function POST(request: NextRequest) {
   let totalSent = 0
   let errors = 0
 
-  const emailList = (subscribers as { email: string; submitter?: { name: string | null } | null }[]).map(s => {
-    const name = s.submitter?.name ?? null
-    const sub: Subscriber = { email: s.email, name }
-    const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(s.email)}`
+  const emailList = (subscribers as { email_encrypted: string; submitter?: { name_encrypted: string | null } | null }[]).map(s => {
+    // Decrypt PII only in-memory to send; never logged or persisted in plaintext.
+    const email = decryptEmail(s.email_encrypted)
+    const name = s.submitter?.name_encrypted ? decrypt(s.submitter.name_encrypted) : null
+    const sub: Subscriber = { email, name }
+    const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(email)}`
 
     return {
       from: 'curious if <hello@curiousif.blog>',
       reply_to: 'hello@curiousif.blog',
-      to: s.email,
+      to: email,
       subject: question.text,
       text: broadcastEmailText({ question, monthLabel, subscriber: sub }),
       html: broadcastEmailHtml({ question, monthLabel, subscriber: sub }),

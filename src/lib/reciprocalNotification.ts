@@ -2,17 +2,11 @@
 // Checks whether this email was nominated for the question they just answered.
 // If yes, sends "they answered" email to the nominator and marks notification_sent.
 
-import { createHmac } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { signNotificationToken } from '@/lib/notificationToken'
+import { blindIndex, decrypt, decryptEmail } from '@/lib/crypto'
 
 const SITE = 'https://curiousif.blog'
-
-function blindIndex(email: string): string {
-  return createHmac('sha256', process.env.BLIND_INDEX_SECRET!)
-    .update(email.toLowerCase().trim())
-    .digest('hex')
-}
 
 async function sendReciprocalNotificationEmail({
   nominatorEmail,
@@ -206,7 +200,7 @@ export async function triggerReciprocalNotification(
       .select(`
         id,
         nominator_submitter_id,
-        nominator:submitters!nominations_nominator_submitter_id_fkey(email, name)
+        nominator:submitters!nominations_nominator_submitter_id_fkey(email_encrypted, name_encrypted)
       `)
       .eq('blind_index_email', idx)
       .eq('question_id', answer.question_id)
@@ -225,7 +219,10 @@ export async function triggerReciprocalNotification(
       .eq('question_id', answer.question_id)
 
     for (const nom of notifs) {
-      const nominatorEmail = nom.nominator?.email
+      // Decrypt the nominator's PII only to send the email — never logged/stored.
+      const nominatorEmail = nom.nominator?.email_encrypted
+        ? decryptEmail(nom.nominator.email_encrypted)
+        : null
       if (!nominatorEmail) continue
 
       // Mark sent first to prevent double-send on retry
@@ -237,7 +234,7 @@ export async function triggerReciprocalNotification(
       // Send the email
       await sendReciprocalNotificationEmail({
         nominatorEmail,
-        nominatorName: nom.nominator?.name ?? null,
+        nominatorName: nom.nominator?.name_encrypted ? decrypt(nom.nominator.name_encrypted) : null,
         nominatorSubmitterId: nom.nominator_submitter_id,
         answerId,
         answerBody: answer.body,

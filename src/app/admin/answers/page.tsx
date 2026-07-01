@@ -1,6 +1,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { decrypt, decryptEmail } from '@/lib/crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,14 +25,27 @@ async function getApprovedAnswers(): Promise<ApprovedAnswer[]> {
     .select(`
       id, body, resonance_count, is_featured, approved_at, created_at,
       question:questions(id, text, accent_colour, published_at),
-      submitter:submitters(email, name)
+      submitter:submitters(email_encrypted, name_encrypted)
     `)
     .eq('status', 'approved')
     .order('resonance_count', { ascending: false })
     .order('approved_at', { ascending: false })
     .limit(200)
 
-  return (data ?? []) as ApprovedAnswer[]
+  type RawAnswer = Omit<ApprovedAnswer, 'submitter'> & {
+    submitter: { email_encrypted: string | null; name_encrypted: string | null } | null
+  }
+
+  // Decrypt submitter PII server-side for the admin view only.
+  return ((data ?? []) as RawAnswer[]).map(a => ({
+    ...a,
+    submitter: a.submitter
+      ? {
+          email: a.submitter.email_encrypted ? decryptEmail(a.submitter.email_encrypted) : null,
+          name: a.submitter.name_encrypted ? decrypt(a.submitter.name_encrypted) : null,
+        }
+      : null,
+  }))
 }
 
 export default async function AdminAnswersPage() {

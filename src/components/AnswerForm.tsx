@@ -18,6 +18,8 @@ interface AnswerFormProps {
 
 export default function AnswerForm({ questionId, accentColour, inviteRef }: AnswerFormProps) {
   const [answerBody, setAnswerBody] = useState('')
+  // Single freeform attribution shown on the form itself — always optional (AGENTS.md #2).
+  const [authorAttribution, setAuthorAttribution] = useState('')
   const [formState, setFormState] = useState<FormState>('idle')
   const [answerId, setAnswerId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -46,7 +48,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
       const res = await fetch('/api/answers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId, answerBody, ref: inviteRef }),
+        body: JSON.stringify({ questionId, answerBody, ref: inviteRef, authorAttribution: authorAttribution.trim() || undefined }),
       })
       const data = await res.json()
 
@@ -370,6 +372,57 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
           {isOverLimit && ' — too long'}
           {isNearLimit && ' — almost there'}
         </span>
+      </div>
+
+      {/* Single freeform attribution — always optional, shown on the form itself (AGENTS.md #2) */}
+      <div style={{ marginBottom: '24px' }}>
+        <label
+          htmlFor="attribution"
+          style={{
+            display: 'block',
+            fontFamily: 'var(--font-ui)',
+            fontSize: '15px',
+            fontWeight: 600,
+            color: '#1A1A1A',
+            marginBottom: '6px',
+          }}
+        >
+          Want to sign it?{' '}
+          <span style={{ fontWeight: 400, color: '#6B6B6B' }}>optional</span>
+        </label>
+        <p
+          style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '13px',
+            color: '#6B6B6B',
+            lineHeight: 1.5,
+            margin: '0 0 10px',
+          }}
+        >
+          Your name and city, or initials — however you&apos;d like to be known. Leave it blank to stay anonymous.
+        </p>
+        <input
+          id="attribution"
+          type="text"
+          value={authorAttribution}
+          onChange={e => setAuthorAttribution(e.target.value.slice(0, 80))}
+          placeholder="e.g. Alex from London, or A.M."
+          disabled={formState === 'submitting'}
+          maxLength={80}
+          style={{
+            width: '100%',
+            minHeight: '44px',
+            padding: '12px 16px',
+            fontFamily: 'var(--font-serif)',
+            fontSize: '16px',
+            color: '#1A1A1A',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E0D9C8',
+            borderRadius: '10px',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
 
       {errorMsg && (

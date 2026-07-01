@@ -229,9 +229,11 @@ function AnswerCard({
       <CueCard
         answer={answer.body}
         author={
-          answer.author_display && answer.author_display !== 'Anonymous'
-            ? answer.author_display
-            : undefined
+          answer.author_attribution?.trim()
+            ? answer.author_attribution
+            : answer.author_display && answer.author_display !== 'Anonymous'
+              ? answer.author_display
+              : undefined
         }
         month={month}
         accentColour={accentColour}

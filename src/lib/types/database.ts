@@ -32,7 +32,9 @@ export interface Answer {
   resonance_count: number
   /** Temporary sock-puppet seed answer — deleted once real answers fill the room */
   is_seed: boolean
-  /** Phase-3B display label e.g. "D.W. · Vancouver". Overrides submitter name+city when set. */
+  /** Single freeform attribution captured on the answer form (AGENTS.md #2). Preferred over author_display. */
+  author_attribution: string | null
+  /** Legacy display label e.g. "D.W. · Vancouver" (derived from submitter name+city). */
   author_display: string | null
   created_at: string
   approved_at: string | null
@@ -40,9 +42,11 @@ export interface Answer {
 
 export interface Submitter {
   id: string
-  email: string | null
-  name: string | null
-  city: string | null
+  // PII encrypted at rest (AES-256-GCM); email_blind_index enables lookups.
+  email_encrypted: string | null
+  email_blind_index: string | null
+  name_encrypted: string | null
+  city_encrypted: string | null
   subscribed: boolean
   created_at: string
 }
@@ -51,8 +55,10 @@ export interface Nomination {
   id: string
   question_id: string
   nominator_submitter_id: string | null
-  nominee_email: string | null
+  nominee_email_encrypted: string | null
   blind_index_email: string | null
+  // Opaque 32-byte invite token (64-char hex) used in URLs — never the email.
+  token: string | null
   personal_note: string | null
   used_at: string | null
   expires_at: string
@@ -62,7 +68,8 @@ export interface Nomination {
 export interface Subscriber {
   id: string
   submitter_id: string | null
-  email: string
+  email_encrypted: string | null
+  email_blind_index: string | null
   subscribed_at: string
   unsubscribed_at: string | null
   notification_opted_out: boolean

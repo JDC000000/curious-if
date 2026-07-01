@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BroadcastButton from '@/components/BroadcastButton'
+import { decrypt, decryptEmail } from '@/lib/crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,15 +25,37 @@ async function getSubscribers(): Promise<{ rows: SubscriberRow[]; total: number;
     .from('subscribers')
     .select(`
       id,
-      email,
+      email_encrypted,
       subscribed_at,
       unsubscribed_at,
-      submitter:submitters(name, city)
+      submitter:submitters(name_encrypted, city_encrypted)
     `)
     .order('subscribed_at', { ascending: false })
     .limit(200)
 
-  const rows = (data ?? []) as SubscriberRow[]
+  type EncryptedRow = {
+    id: string
+    email_encrypted: string | null
+    subscribed_at: string
+    unsubscribed_at: string | null
+    submitter: { name_encrypted: string | null; city_encrypted: string | null } | null
+  }
+
+  const safeDecrypt = (payload: string | null): string | null => {
+    if (!payload) return null
+    try { return decrypt(payload) } catch { return null }
+  }
+
+  // Decrypt PII server-side for the admin view only (admin route, service role).
+  const rows: SubscriberRow[] = ((data ?? []) as EncryptedRow[]).map(r => ({
+    id: r.id,
+    email: r.email_encrypted ? decryptEmail(r.email_encrypted) : '—',
+    subscribed_at: r.subscribed_at,
+    unsubscribed_at: r.unsubscribed_at,
+    submitter: r.submitter
+      ? { name: safeDecrypt(r.submitter.name_encrypted), city: safeDecrypt(r.submitter.city_encrypted) }
+      : null,
+  }))
   const active = rows.filter(r => !r.unsubscribed_at).length
 
   return { rows, total: rows.length, active }

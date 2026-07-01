@@ -1,30 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
-import { createHmac } from 'crypto'
+import { blindIndex, encryptEmail } from '@/lib/crypto'
+import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 import { rateGuard } from '@/lib/rateLimit'
-
-function blindIndex(email: string): string {
-  return createHmac('sha256', process.env.BLIND_INDEX_SECRET!)
-    .update(email.toLowerCase().trim())
-    .digest('hex')
-}
 
 async function sendInviteEmail({
   nomineeEmail,
   personalNote,
   questionText,
-  nominationId,
+  inviteToken,
 }: {
   nomineeEmail: string
   personalNote?: string
   questionText: string
-  nominationId: string
+  inviteToken: string
 }) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) return
 
-  const answerUrl = `https://curiousif.blog/answer?ref=${nominationId}`
-  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(nomineeEmail)}`
+  // Opaque 32-byte token in the URL — never the nominee email or a guessable id.
+  const answerUrl = `https://curiousif.blog/answer?ref=${inviteToken}`
+  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(nomineeEmail)}`
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -165,14 +162,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No active question' }, { status: 404 })
   }
 
-  // Create nomination
+  // Opaque 32-byte invite token (64-char hex) — stored, mapped to this nomination.
+  const inviteToken = randomBytes(32).toString('hex')
+
+  // Create nomination — nominee email is encrypted at rest; blind index enables
+  // the reciprocal-answer lookup without storing plaintext.
   const { data: nomination, error } = await supabase
     .from('nominations')
     .insert({
       question_id: question.id,
-      nominee_email: nomineeEmail,
+      nominee_email_encrypted: encryptEmail(nomineeEmail),
       blind_index_email: blindIndex(nomineeEmail),
       personal_note: personalNote?.trim() || null,
+      token: inviteToken,
     })
     .select('id')
     .single()
@@ -187,7 +189,7 @@ export async function POST(request: NextRequest) {
     nomineeEmail,
     personalNote: personalNote?.trim(),
     questionText: question.text,
-    nominationId: nomination.id,
+    inviteToken,
   })
 
   return NextResponse.json({ success: true })

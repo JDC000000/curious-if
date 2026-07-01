@@ -9,14 +9,14 @@ export async function POST(request: NextRequest) {
   const limited = await rateGuard(request, 'answers', 10, 3600)
   if (limited) return limited
 
-  let body: { questionId?: string; answerBody?: string; ref?: string }
+  let body: { questionId?: string; answerBody?: string; ref?: string; authorAttribution?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { questionId, answerBody, ref } = body
+  const { questionId, answerBody, ref, authorAttribution } = body
 
   // Validate inputs
   if (!answerBody || typeof answerBody !== 'string' || answerBody.trim().length === 0) {
@@ -25,6 +25,9 @@ export async function POST(request: NextRequest) {
   if (answerBody.length > MAX_BODY_LENGTH) {
     return NextResponse.json({ error: `Answer must be ${MAX_BODY_LENGTH} characters or fewer` }, { status: 400 })
   }
+  // author_attribution is a single optional freeform field (AGENTS.md #2) — never
+  // required, never format-validated; only length-capped to match the DB column.
+  const attribution = typeof authorAttribution === 'string' ? authorAttribution.trim().slice(0, 80) : null
   if (!questionId || typeof questionId !== 'string') {
     return NextResponse.json({ error: 'questionId is required' }, { status: 400 })
   }
@@ -57,6 +60,7 @@ export async function POST(request: NextRequest) {
       body: answerBody.trim(),
       status: 'pending',
       submitter_id: null,
+      author_attribution: attribution,
     })
     .select('id, status')
     .single()
@@ -72,7 +76,7 @@ export async function POST(request: NextRequest) {
     ;(supabase as any)
       .from('nominations')
       .update({ used_at: new Date().toISOString() })
-      .eq('id', ref)
+      .eq('token', ref) // ref is the opaque invite token, not a row id
       .is('used_at', null) // only mark once
       .gte('expires_at', new Date().toISOString()) // only if not expired
       .then(() => {})

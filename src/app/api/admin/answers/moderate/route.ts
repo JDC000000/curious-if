@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
+import { decrypt, decryptEmail } from '@/lib/crypto'
 
 const SITE = 'https://curiousif.blog'
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       .from('answers')
       .select(`
         id, body, question_id,
-        submitter:submitters(email, name),
+        submitter:submitters(email_encrypted, name_encrypted),
         question:questions(published_at, text)
       `)
       .eq('id', answerId)
@@ -79,12 +80,14 @@ export async function POST(request: NextRequest) {
     // OG image warm-up (fire-and-forget)
     fetch(`${SITE}/api/og/${answerId}`, { method: 'POST' }).catch(() => {})
 
-    // "Your answer is live" email — fire and forget
-    const submitterEmail = full?.submitter?.email
+    // "Your answer is live" email — fire and forget. Decrypt PII only to send.
+    const submitterEmail = full?.submitter?.email_encrypted
+      ? decryptEmail(full.submitter.email_encrypted)
+      : null
     if (submitterEmail) {
       void sendAnswerLiveEmail(
         submitterEmail,
-        full.submitter.name ?? null,
+        full.submitter.name_encrypted ? decrypt(full.submitter.name_encrypted) : null,
         answerId,
         full.body,
         full.question?.text ?? '',

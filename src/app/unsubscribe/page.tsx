@@ -9,13 +9,14 @@ type State = 'confirm' | 'loading' | 'done' | 'already' | 'error'
 
 function UnsubscribeForm() {
   const searchParams = useSearchParams()
-  const email = searchParams.get('email') ?? ''
+  // Opaque signed token — carries the email blind index, never the email itself.
+  const token = searchParams.get('token') ?? ''
   const isNotifications = searchParams.get('notifications') === '1'
   const [state, setState] = useState<State>(isNotifications ? 'done' : 'confirm')
 
   // Auto-process if arriving from a one-click unsubscribe link
   const handleUnsubscribe = async () => {
-    if (!email) {
+    if (!token) {
       setState('error')
       return
     }
@@ -24,7 +25,7 @@ function UnsubscribeForm() {
       const res = await fetch('/api/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ token }),
       })
       if (res.ok) {
         setState('done')
@@ -88,7 +89,7 @@ function UnsubscribeForm() {
               >
                 Unsubscribe
               </p>
-              {email ? (
+              {token ? (
                 <p
                   style={{
                     fontFamily: 'var(--font-ui)',
@@ -98,28 +99,28 @@ function UnsubscribeForm() {
                     marginBottom: '32px',
                   }}
                 >
-                  Remove <strong style={{ color: '#3D3D3D' }}>{email}</strong> from the curious if list.
+                  Remove your address from the curious if list.
                   You won&apos;t hear from us again.
                 </p>
               ) : (
                 <p style={{ fontFamily: 'var(--font-ui)', fontSize: '15px', color: '#DC2626', marginBottom: '32px' }}>
-                  No email address found. Try clicking the unsubscribe link in the email again.
+                  This unsubscribe link is invalid. Try clicking the unsubscribe link in the email again.
                 </p>
               )}
               <button
                 onClick={handleUnsubscribe}
-                disabled={!email}
+                disabled={!token}
                 style={{
                   width: '100%',
                   padding: '14px 24px',
-                  backgroundColor: email ? '#1A1A1A' : '#E0D9C8',
-                  color: email ? '#F8F3E9' : '#9A9A9A',
+                  backgroundColor: token ? '#1A1A1A' : '#E0D9C8',
+                  color: token ? '#F8F3E9' : '#9A9A9A',
                   border: 'none',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
                   fontSize: '15px',
                   fontWeight: 600,
-                  cursor: email ? 'pointer' : 'not-allowed',
+                  cursor: token ? 'pointer' : 'not-allowed',
                   marginBottom: '16px',
                 }}
               >
@@ -171,7 +172,7 @@ function UnsubscribeForm() {
               >
                 {isNotifications
                   ? "You won't receive notifications when someone you invited answers."
-                  : `${email} has been removed. You won't hear from us again.`}
+                  : "You've been removed. You won't hear from us again."}
               </p>
               <Link
                 href="/"

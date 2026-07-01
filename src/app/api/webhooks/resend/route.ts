@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { createHmac, timingSafeEqual } from 'crypto'
+import { blindIndex } from '@/lib/crypto'
 
 function verifySvixSignature(
   secret: string,
@@ -73,13 +74,14 @@ export async function POST(request: NextRequest) {
       null
 
     if (email) {
+      // Resolve by blind index — never query or log the plaintext email.
       await supabase
         .from('subscribers')
         .update({ unsubscribed_at: new Date().toISOString() })
-        .eq('email', email)
+        .eq('email_blind_index', blindIndex(email))
         .is('unsubscribed_at', null)
 
-      console.log(`Resend webhook: unsubscribed ${email} (event: ${event.type})`)
+      console.log(`Resend webhook: unsubscribed a subscriber (event: ${event.type})`)
     }
   }
 

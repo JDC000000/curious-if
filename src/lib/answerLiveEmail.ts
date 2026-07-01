@@ -2,6 +2,8 @@
 // Used by both auto-approve (/api/moderate) and human approve (/api/admin/answers/moderate)
 // and by /api/subscribe when the answer is already approved by the time email is captured.
 
+import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
+
 const SITE = 'https://curiousif.blog'
 
 export async function sendAnswerLiveEmail(
@@ -20,7 +22,7 @@ export async function sendAnswerLiveEmail(
   const preview = answerBody.length > 160 ? answerBody.slice(0, 157) + '…' : answerBody
   const permalinkUrl = `${SITE}/answers/${answerId}`
   const browseUrl = `${SITE}/browse`
-  const unsubscribeUrl = `${SITE}/unsubscribe?email=${encodeURIComponent(email)}`
+  const unsubscribeUrl = `${SITE}/unsubscribe?token=${signUnsubscribeToken(email)}`
 
   const date = questionPublishedAt ? new Date(questionPublishedAt) : new Date()
   const monthLabel = date.toLocaleString('en-GB', { month: 'long', year: 'numeric' })

@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
 import { rateGuard } from '@/lib/rateLimit'
 import { triggerReciprocalNotification } from '@/lib/reciprocalNotification'
+import { encrypt, encryptEmail, blindIndex } from '@/lib/crypto'
+import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 
 async function addToResendContacts(email: string, name?: string) {
   const apiKey = process.env.RESEND_API_KEY
@@ -31,7 +33,7 @@ async function sendWelcomeEmail(email: string, name?: string) {
   if (!apiKey) return
 
   const firstName = name?.split(' ')[0] ?? null
-  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?email=${encodeURIComponent(email)}`
+  const unsubscribeUrl = `https://curiousif.blog/unsubscribe?token=${signUnsubscribeToken(email)}`
 
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -179,24 +181,33 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
+  // Deterministic keyed hash — used for dedup/lookup without storing plaintext email.
+  const emailBlindIndex = blindIndex(email)
 
-  // Check if this is a new subscriber (before upsert)
+  // Check if this is a new subscriber (before upsert) — look up by blind index
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing } = await (supabase as any)
     .from('subscribers')
     .select('id')
-    .eq('email', email)
+    .eq('email_blind_index', emailBlindIndex)
     .maybeSingle()
 
   const isNewSubscriber = !existing
 
-  // Upsert submitter row
+  // Upsert submitter row — email/name/city encrypted at rest (AES-256-GCM),
+  // deduped by the email blind index.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: submitter, error: submitterError } = await (supabase as any)
     .from('submitters')
     .upsert(
-      { email, name: name || null, city: city || null, subscribed: true },
-      { onConflict: 'email', ignoreDuplicates: false }
+      {
+        email_encrypted: encryptEmail(email),
+        email_blind_index: emailBlindIndex,
+        name_encrypted: name ? encrypt(name) : null,
+        city_encrypted: city ? encrypt(city) : null,
+        subscribed: true,
+      },
+      { onConflict: 'email_blind_index', ignoreDuplicates: false }
     )
     .select('id')
     .single()
@@ -206,13 +217,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save subscriber' }, { status: 500 })
   }
 
-  // Upsert subscriber row
+  // Upsert subscriber row — email encrypted, deduped by blind index
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any)
     .from('subscribers')
     .upsert(
-      { submitter_id: submitter.id, email, unsubscribed_at: null },
-      { onConflict: 'email', ignoreDuplicates: false }
+      {
+        submitter_id: submitter.id,
+        email_encrypted: encryptEmail(email),
+        email_blind_index: emailBlindIndex,
+        unsubscribed_at: null,
+      },
+      { onConflict: 'email_blind_index', ignoreDuplicates: false }
     )
 
   // Link submitter to the answer they just submitted
