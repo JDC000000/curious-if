@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Answer } from '@/lib/types/database'
 import CueCard from './CueCard'
+
+type SortMode = 'newest' | 'resonance'
 
 interface RealtimeGridProps {
   initialAnswers: Answer[]
@@ -22,6 +24,7 @@ export default function RealtimeGrid({
 }: RealtimeGridProps) {
   const [answers, setAnswers] = useState<Answer[]>(initialAnswers)
   const [newAnswerIds, setNewAnswerIds] = useState<Set<string>>(new Set())
+  const [sort, setSort] = useState<SortMode>('newest')
   const queueRef = useRef<Answer[]>([])
   const processingRef = useRef(false)
 
@@ -84,7 +87,25 @@ export default function RealtimeGrid({
   }, [questionId])
 
   const featuredAnswers = answers.filter(a => a.is_featured)
-  const regularAnswers = answers.filter(a => !a.is_featured)
+  const regularAnswers = useMemo(() => {
+    const base = answers.filter(a => !a.is_featured)
+    if (sort === 'resonance') {
+      return [...base].sort((a, b) => (b.resonance_count ?? 0) - (a.resonance_count ?? 0))
+    }
+    return base // already sorted newest-first from DB
+  }, [answers, sort])
+
+  const btnBase: React.CSSProperties = {
+    fontFamily: 'var(--font-mono)',
+    fontSize: '11px',
+    fontWeight: 500,
+    letterSpacing: '0.06em',
+    padding: '5px 12px',
+    borderRadius: '5px',
+    border: '1px solid #E0D9C8',
+    cursor: 'pointer',
+    transition: 'background-color 120ms ease, color 120ms ease',
+  }
 
   return (
     <div>
@@ -123,6 +144,34 @@ export default function RealtimeGrid({
             ))}
           </div>
         </section>
+      )}
+
+      {/* Sort toggle — only show when there are enough answers to warrant it */}
+      {regularAnswers.length > 3 && (
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '20px' }}>
+          <button
+            onClick={() => setSort('newest')}
+            style={{
+              ...btnBase,
+              backgroundColor: sort === 'newest' ? '#1A1A1A' : 'transparent',
+              color: sort === 'newest' ? '#F8F3E9' : '#6B6B6B',
+              borderColor: sort === 'newest' ? '#1A1A1A' : '#E0D9C8',
+            }}
+          >
+            Newest
+          </button>
+          <button
+            onClick={() => setSort('resonance')}
+            style={{
+              ...btnBase,
+              backgroundColor: sort === 'resonance' ? '#1A1A1A' : 'transparent',
+              color: sort === 'resonance' ? '#F8F3E9' : '#6B6B6B',
+              borderColor: sort === 'resonance' ? '#1A1A1A' : '#E0D9C8',
+            }}
+          >
+            ◆ Most resonated
+          </button>
+        </div>
       )}
 
       <div

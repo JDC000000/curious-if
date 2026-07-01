@@ -63,14 +63,18 @@ export default async function AdminDashboardPage() {
             description="Review pending answers — approve or reject"
             href="/admin/moderation"
             accent="#5C8C6B"
-            badge="Phase 2"
           />
           <AdminCard
             title="Subscribers"
             description="View subscriber list and send broadcasts"
             href="/admin/subscribers"
             accent="#B8902A"
-            badge="Phase 3"
+          />
+          <AdminCard
+            title="Answers"
+            description="All published answers sorted by resonance"
+            href="/admin/answers"
+            accent="#7C5C8C"
           />
         </div>
       </div>
