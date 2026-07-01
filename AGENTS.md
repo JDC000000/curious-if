@@ -223,3 +223,22 @@ GitHub Actions runs on every PR:
 - Build check (`next build`)
 
 See `.github/workflows/ci.yml`.
+
+---
+
+## Deploy Checklist (manual — not enforceable in code)
+
+1. **Disable Supabase email signups** — Supabase → Authentication → Providers →
+   Email → turn OFF "Allow new users to sign up". Pre-provision only the
+   `ADMIN_EMAIL` user. Admin auth is authorisation-checked (`src/lib/adminAuth.ts`:
+   `user.email === ADMIN_EMAIL`, timing-safe) in the proxy middleware and
+   `/auth/callback`, and `signInWithOtp` uses `shouldCreateUser: false` — but
+   disabling signups in the dashboard is the belt-and-braces control (H-1).
+2. **Apply migrations** — run every file in `supabase/migrations/` in order
+   (through `011`) before first traffic. `010` drops plaintext PII columns; `011`
+   enables RLS on `rate_limit_log` and revokes SECURITY DEFINER functions from anon.
+3. **Set all secrets in Vercel** — including `MODERATE_SECRET`,
+   `UNSUBSCRIBE_TOKEN_SECRET`, `NOTIFICATION_TOKEN_SECRET`, `REVALIDATE_SECRET`.
+   Missing token secrets cause those flows to throw.
+4. **Security headers** ship via `next.config.ts` `headers()` (CSP, XFO, etc.).
+   Verify nothing is CSP-blocked in production (Plausible, Supabase, fonts).

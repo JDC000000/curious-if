@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({
@@ -28,7 +29,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  if (!user) {
+  // Authorisation, not just authentication — the session user must be the curator.
+  const authorized = !!user && isAdminEmail(user.email)
+
+  if (!authorized) {
     // Admin API routes: 401 (defense-in-depth — routes also check, but a new
     // route that forgets the check must not be left open).
     if (pathname.startsWith('/api/admin')) {

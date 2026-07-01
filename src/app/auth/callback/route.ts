@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/admin'
+  // Open-redirect guard: only relative, non protocol-relative paths.
+  const rawNext = searchParams.get('next') ?? '/admin'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/admin'
 
   if (code) {
     const cookieStore = await cookies()
@@ -27,10 +30,16 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`)
+      // Authorisation, not just authentication: only the curator may proceed.
+      if (isAdminEmail(data.user?.email)) {
+        return NextResponse.redirect(`${origin}${next}`)
+      }
+      // Valid magic link but not the admin — tear down the session.
+      await supabase.auth.signOut()
+      return NextResponse.redirect(`${origin}/admin/login?error=not_authorized`)
     }
   }
 

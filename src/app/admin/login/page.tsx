@@ -17,6 +17,8 @@ export default function AdminLoginPage() {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email: 'joncartwright00@gmail.com',
       options: {
+        // Never auto-create accounts — only the pre-provisioned curator may log in.
+        shouldCreateUser: false,
         emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
       },
     })
