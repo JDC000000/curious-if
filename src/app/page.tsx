@@ -495,7 +495,7 @@ function AnswersPreview({
             fontFamily: 'var(--font-ui)',
             fontSize: '13px',
             fontWeight: 600,
-            color: accentColour,
+            color: '#6E6E6E', // a11y: accent as small text fails AA (see main's contrast sweep, 5ef8d17); accent motif stays on the card spine + preview stripes
             textDecoration: 'none',
           }}
         >
