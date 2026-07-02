@@ -109,7 +109,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
               fontWeight: 500,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: accentColour,
+              color: '#6E6E6E', // a11y: was accentColour (fails AA as small text, e.g. #C47B20 on cream = 3.06:1)
               marginBottom: '12px',
             }}
           >
@@ -173,7 +173,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
                 fontWeight: 500,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
-                color: accentColour,
+                color: '#6E6E6E', // a11y: was accentColour (fails AA as small text, e.g. #C47B20 on cream = 3.06:1)
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
@@ -222,7 +222,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
                       style={{
                         fontFamily: 'var(--font-ui)',
                         fontSize: '12px',
-                        color: accentColour,
+                        color: '#6E6E6E', // a11y: was accentColour (fails AA as small text, e.g. #C47B20 on off-white = ~3.1:1)
                         fontWeight: 500,
                       }}
                     >

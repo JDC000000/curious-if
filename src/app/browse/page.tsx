@@ -85,7 +85,7 @@ export default async function BrowsePage() {
               fontWeight: 500,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: accentColour,
+              color: '#6E6E6E', // a11y: was accentColour (fails AA as small text, e.g. #C47B20 on cream = 3.06:1)
               marginBottom: '12px',
             }}
           >
@@ -252,7 +252,7 @@ export default async function BrowsePage() {
                             fontWeight: 500,
                             letterSpacing: '0.1em',
                             textTransform: 'uppercase',
-                            color: accent,
+                            color: '#6E6E6E', // a11y: was accent (fails AA as small text, e.g. #5C8C6B on white = 3.88:1)
                             marginBottom: '8px',
                           }}
                         >
@@ -286,7 +286,7 @@ export default async function BrowsePage() {
                         >
                           <span>{q.answer_count} {q.answer_count === 1 ? 'answer' : 'answers'}</span>
                           <span>·</span>
-                          <span style={{ color: accent, fontWeight: 500 }}>Read →</span>
+                          <span style={{ color: '#6E6E6E', fontWeight: 500 }}>Read →</span>{/* a11y: was accent, e.g. #5C8C6B on white = 3.88:1 */}
                         </div>
                       </div>
                     </div>

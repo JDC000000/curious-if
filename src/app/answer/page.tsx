@@ -73,7 +73,7 @@ export default async function AnswerPage({ searchParams }: SearchParams) {
               fontWeight: 500,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: question.accent_colour,
+              color: '#6E6E6E', // a11y: was question.accent_colour (fails AA as small text, e.g. #C47B20 on cream = 3.06:1)
               marginBottom: '12px',
             }}
           >

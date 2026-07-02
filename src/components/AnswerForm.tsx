@@ -301,8 +301,9 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
           <div style={{ textAlign: 'center', padding: '24px', color: '#6B6B6B', fontFamily: 'var(--font-ui)', fontSize: '14px' }}>
             <Link
               href="/browse"
-              style={{ color: accentColour, textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: '#6E6E6E', textDecoration: 'none', fontWeight: 600 }}
             >
+              {/* a11y: was accentColour (fails AA as small text, e.g. #C47B20 on white = 3.39:1) */}
               Browse other answers →
             </Link>
           </div>
