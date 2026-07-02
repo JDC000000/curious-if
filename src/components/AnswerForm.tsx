@@ -442,7 +442,10 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      {/* flexWrap so the helper text drops below on narrow screens instead of
+          squeezing the button — without it the button's own text wrapped to
+          two lines on most iPhones (≤400px), mobile QA pass 3 finding 2 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
         <button
           type="submit"
           disabled={!canSubmit}
@@ -455,6 +458,8 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
             fontFamily: 'var(--font-ui)',
             fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes (padding already ≥44px tall)
             fontWeight: 600,
+            whiteSpace: 'nowrap', // keep "Submit answer" on one line (mobile QA pass 3 finding 2)
+            flexShrink: 0,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
             transition: 'background-color 150ms ease, color 150ms ease',
           }}

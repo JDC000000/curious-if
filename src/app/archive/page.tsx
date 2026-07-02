@@ -71,7 +71,9 @@ export default async function ArchivePage() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              // 260px matches /browse's card width (was 280px, which + 48px main
+              // padding overflowed 320px-class screens by 8px — mobile QA pass 3, finding 1)
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
               gap: '20px',
               alignItems: 'start',
             }}

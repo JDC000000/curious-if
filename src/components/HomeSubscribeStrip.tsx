@@ -96,7 +96,10 @@ export default function HomeSubscribeStrip({ accentColour }: HomeSubscribeStripP
             minWidth: '200px',
             padding: '10px 16px',
             fontFamily: 'var(--font-ui)',
-            fontSize: '14px',
+            // 16px, not 14px: below 16px, iOS Safari auto-zooms on focus for
+            // text inputs (mobile QA pass 3 finding 3) — /answer's inputs are
+            // already correctly 16px, this was the one gap, homepage-only.
+            fontSize: '16px',
             color: '#1A1A1A',
             backgroundColor: 'rgba(255,255,255,0.9)',
             border: '1px solid #E0D9C8',
