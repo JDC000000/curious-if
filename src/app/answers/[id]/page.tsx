@@ -174,12 +174,12 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                padding: '12px 24px',
+                padding: '14px 26px',
                 backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
-                fontSize: '14px',
+                fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) on #C4703A; tap target ≥44px
                 fontWeight: 600,
                 textDecoration: 'none',
               }}

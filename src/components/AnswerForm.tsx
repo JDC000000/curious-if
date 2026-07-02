@@ -453,7 +453,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
             border: 'none',
             borderRadius: '8px',
             fontFamily: 'var(--font-ui)',
-            fontSize: '15px',
+            fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes (padding already ≥44px tall)
             fontWeight: 600,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
             transition: 'background-color 150ms ease, color 150ms ease',

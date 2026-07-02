@@ -228,7 +228,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                   fontStyle: 'italic',
                   fontSize: '17px',
                   fontWeight: 400,
-                  color: 'rgba(26,26,26,0.55)',
+                  color: '#6B6B6B', // a11y: was rgba(26,26,26,0.55)=~#818181 on white (3.89:1); #6B6B6B clears AA 4.5:1
                   lineHeight: 1.55,
                   marginBottom: '32px',
                 }}
@@ -243,12 +243,12 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  padding: '12px 24px',
+                  padding: '14px 26px',
                   backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                   color: '#FFFFFF',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
-                  fontSize: '15px',
+                  fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes; also lifts tap target ≥44px
                   fontWeight: 600,
                   textDecoration: 'none',
                 }}

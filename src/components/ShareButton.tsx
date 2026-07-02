@@ -54,7 +54,7 @@ export default function ShareButton({ url, text, accentColour = '#3D5A8C' }: Sha
         display: 'inline-flex',
         alignItems: 'center',
         gap: '8px',
-        padding: '12px 24px',
+        padding: '14px 24px', // a11y: 12px→14px lifts tap target to ≥44px tall
         backgroundColor: copied ? '#F0FFF4' : 'transparent',
         color: copied ? '#2E6B45' : '#6B6B6B',
         border: `1px solid ${copied ? '#2E6B45' : '#E0D9C8'}`,

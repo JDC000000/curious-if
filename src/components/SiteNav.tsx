@@ -68,8 +68,12 @@ export default function SiteNav() {
             border: 'none',
             cursor: 'pointer',
             padding: '8px',
+            minWidth: '44px',
+            minHeight: '44px',
             color: 'rgba(248,243,233,0.8)',
             flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
             gap: '5px',
           }}
         >

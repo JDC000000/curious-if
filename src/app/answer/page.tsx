@@ -98,7 +98,7 @@ export default async function AnswerPage({ searchParams }: SearchParams) {
                 fontFamily: 'var(--font-serif)',
                 fontStyle: 'italic',
                 fontSize: '16px',
-                color: 'rgba(26,26,26,0.55)',
+                color: '#6B6B6B', // a11y: was rgba(26,26,26,0.55)=~#7e7c77 on cream (3.77:1); #6B6B6B clears AA 4.5:1
                 lineHeight: 1.55,
               }}
             >

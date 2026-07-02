@@ -107,6 +107,10 @@ export default function CueCard({
         color: resonated ? accentColour : '#BABABA',
         transition: 'color 150ms ease',
         padding: '2px 0',
+        margin: '-12px 0',
+        minWidth: '44px',
+        minHeight: '44px',
+        justifyContent: 'center',
         lineHeight: 1,
         flexShrink: 0,
       }}
@@ -349,6 +353,10 @@ export default function CueCard({
                     color: resonated ? accentColour : 'rgba(248,243,233,0.3)',
                     transition: 'color 150ms ease',
                     padding: '2px 0',
+                    margin: '-12px 0',
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    justifyContent: 'center',
                     lineHeight: 1,
                     flexShrink: 0,
                   }}

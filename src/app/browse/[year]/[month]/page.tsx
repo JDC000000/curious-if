@@ -134,7 +134,7 @@ export default async function MonthBrowsePage({ params }: PageProps) {
                 fontFamily: 'var(--font-serif)',
                 fontStyle: 'italic',
                 fontSize: '16px',
-                color: 'rgba(26,26,26,0.55)',
+                color: '#6B6B6B', // a11y: was rgba(26,26,26,0.55)=~#7e7c77 on cream (3.77:1); #6B6B6B clears AA 4.5:1
               }}
             >
               {question.whisper_line}
@@ -148,12 +148,12 @@ export default async function MonthBrowsePage({ params }: PageProps) {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                padding: '10px 20px',
+                padding: '14px 24px',
                 backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
-                fontSize: '14px',
+                fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) on #C4703A; tap target ≥44px
                 fontWeight: 600,
                 textDecoration: 'none',
               }}
