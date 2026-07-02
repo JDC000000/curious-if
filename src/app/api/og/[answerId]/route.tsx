@@ -146,7 +146,7 @@ function AnswerCard({
               color: accentColour,
             }}
           >
-            {monthLabel} · CURIOUS IF
+            {`${monthLabel} · CURIOUS IF`}
           </div>
 
           <div
@@ -160,7 +160,7 @@ function AnswerCard({
               letterSpacing: '-0.01em',
             }}
           >
-            &ldquo;{preview}&rdquo;
+            {`“${preview}”`}
           </div>
         </div>
 
@@ -184,7 +184,7 @@ function AnswerCard({
               whiteSpace: 'nowrap',
             }}
           >
-            In response to: {questionText}
+            {`In response to: ${questionText}`}
           </div>
           <div
             style={{

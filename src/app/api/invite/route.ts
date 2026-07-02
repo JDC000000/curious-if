@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
 import { blindIndex, encryptEmail } from '@/lib/crypto'
@@ -18,7 +18,10 @@ async function sendInviteEmail({
   inviteToken: string
 }) {
   const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) return
+  if (!apiKey) {
+    console.error('Invite email NOT sent: RESEND_API_KEY is not set')
+    return
+  }
 
   // Opaque 32-byte token in the URL — never the nominee email or a guessable id.
   const answerUrl = `https://curiousif.blog/answer?ref=${inviteToken}`
@@ -110,25 +113,35 @@ Write your answer: ${answerUrl}
 curious if · curiousif.blog
 ${unsubscribeUrl}`
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'curious if <hello@curiousif.blog>',
-      reply_to: 'hello@curiousif.blog',
-      to: nomineeEmail,
-      subject: 'Someone thought you had something to say',
-      html,
-      text,
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
       headers: {
-        'List-Unsubscribe': `<${unsubscribeUrl}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-    }),
-  }).catch(err => console.warn('Invite email failed:', err))
+      body: JSON.stringify({
+        from: 'curious if <hello@curiousif.blog>',
+        reply_to: 'hello@curiousif.blog',
+        to: nomineeEmail,
+        subject: 'Someone thought you had something to say',
+        html,
+        text,
+        headers: {
+          'List-Unsubscribe': `<${unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+      }),
+    })
+    // fetch() does not throw on HTTP error status — inspect it explicitly so a
+    // rejected send is visible in logs instead of silently reporting success.
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      console.error(`Invite email send failed: Resend returned ${res.status} ${detail}`)
+    }
+  } catch (err) {
+    console.error('Invite email send error:', err)
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -188,12 +201,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
   }
 
-  // Send invite email (fire-and-forget)
-  void sendInviteEmail({
-    nomineeEmail,
-    personalNote: note ?? undefined,
-    questionText: question.text,
-    inviteToken,
+  // Send the invite email after the response is sent. `after()` keeps the
+  // serverless invocation alive until this completes — a bare fire-and-forget
+  // send is killed when the function returns on Vercel, so the email never
+  // reached Resend even though the UI showed "Sent" (same failure mode and fix
+  // as the moderation trigger in /api/answers).
+  after(async () => {
+    await sendInviteEmail({
+      nomineeEmail,
+      personalNote: note ?? undefined,
+      questionText: question.text,
+      inviteToken,
+    })
   })
 
   return NextResponse.json({ success: true })
