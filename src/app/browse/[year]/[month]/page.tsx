@@ -86,7 +86,14 @@ export default async function MonthBrowsePage({ params }: PageProps) {
   return (
     <>
       <SiteNav />
-      <main style={{ maxWidth: '1120px', margin: '0 auto', padding: '48px 24px' }}>
+      {/* width:100% is load-bearing: <main> is a flex child of <body> (flex
+          column). The `margin: 0 auto` gives it auto cross-axis margins, which
+          suppress flexbox's default `align-items: stretch` — so without an
+          explicit width the element shrinks to its content's intrinsic width
+          and the answer grid collapses to 2 columns on months whose text has a
+          narrow max-content width (e.g. June). Pinning width:100% makes it fill
+          to max-width and centre regardless of content. */}
+      <main style={{ width: '100%', maxWidth: '1120px', margin: '0 auto', padding: '48px 24px' }}>
         <div style={{ marginBottom: '12px' }}>
           <Link
             href="/archive"
