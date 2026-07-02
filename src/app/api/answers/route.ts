@@ -70,17 +70,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save answer' }, { status: 500 })
   }
 
-  // Mark nomination as used if this answer came via an invite link (fire-and-forget)
+  // Mark the nomination used if this answer came via an invite link. Runs inside
+  // after() (was a bare fire-and-forget promise) so Vercel keeps the invocation
+  // alive until it completes, and any failure is logged instead of silently
+  // swallowed by a `.catch(() => {})` no-op (L1).
   if (ref) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(supabase as any)
-      .from('nominations')
-      .update({ used_at: new Date().toISOString() })
-      .eq('token', ref) // ref is the opaque invite token, not a row id
-      .is('used_at', null) // only mark once
-      .gte('expires_at', new Date().toISOString()) // only if not expired
-      .then(() => {})
-      .catch(() => {})
+    after(async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: markError } = await (supabase as any)
+          .from('nominations')
+          .update({ used_at: new Date().toISOString() })
+          .eq('token', ref) // ref is the opaque invite token, not a row id
+          .is('used_at', null) // only mark once
+          .gte('expires_at', new Date().toISOString()) // only if not expired
+        if (markError) {
+          console.error(`Failed to mark nomination used from invite ref: ${markError.message}`)
+        }
+      } catch (err) {
+        console.error('Nomination mark-used error:', err)
+      }
+    })
   }
 
   // Trigger OpenAI moderation after the response is sent. `after()` keeps the
