@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { randomBytes } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/server'
-import { blindIndex, encryptEmail } from '@/lib/crypto'
+import { blindIndex, encryptEmail, hashToken } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 import { escapeHtml } from '@/lib/escapeHtml'
 import { rateGuard } from '@/lib/rateLimit'
@@ -179,11 +179,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No active question' }, { status: 404 })
   }
 
-  // Opaque 32-byte invite token (64-char hex) — stored, mapped to this nomination.
+  // Opaque 32-byte invite token (64-char hex). The RAW token travels in the
+  // invite URL; only its SHA-256 hash is persisted (see hashToken) so a DB read
+  // never exposes a usable token.
   const inviteToken = randomBytes(32).toString('hex')
 
   // Create nomination — nominee email is encrypted at rest; blind index enables
-  // the reciprocal-answer lookup without storing plaintext.
+  // the reciprocal-answer lookup without storing plaintext; the invite token is
+  // stored hashed and matched by hash on lookup.
   const { data: nomination, error } = await supabase
     .from('nominations')
     .insert({
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
       nominee_email_encrypted: encryptEmail(nomineeEmail),
       blind_index_email: blindIndex(nomineeEmail),
       personal_note: note,
-      token: inviteToken,
+      token: hashToken(inviteToken),
     })
     .select('id')
     .single()

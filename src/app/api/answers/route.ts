@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { rateGuard } from '@/lib/rateLimit'
+import { hashToken } from '@/lib/crypto'
 
 const MAX_BODY_LENGTH = 1500
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
         const { error: markError } = await (supabase as any)
           .from('nominations')
           .update({ used_at: new Date().toISOString() })
-          .eq('token', ref) // ref is the opaque invite token, not a row id
+          .eq('token', hashToken(ref)) // match the stored SHA-256 hash of the opaque token
           .is('used_at', null) // only mark once
           .gte('expires_at', new Date().toISOString()) // only if not expired
         if (markError) {
