@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/server'
-import { Question } from '@/lib/types/database'
+import { Answer, Question } from '@/lib/types/database'
 import SiteNav from '@/components/SiteNav'
 import HomeSubscribeStrip from '@/components/HomeSubscribeStrip'
 import ArchiveCard, { QuestionWithCount } from '@/components/ArchiveCard'
@@ -10,6 +10,7 @@ export const revalidate = 3600
 async function getHomeData(): Promise<{
   question: Question | null
   answerCount: number
+  answers: Answer[]
   pastQuestions: QuestionWithCount[]
 }> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +30,20 @@ async function getHomeData(): Promise<{
         .eq('status', 'approved')
     : Promise.resolve({ count: 0 })
 
+  // A few answers to preview on the homepage — reuses the same query shape
+  // /browse uses (approved answers for the spotlight question, seed answers
+  // included). Best-first (most resonance), then most recently approved.
+  const answersQuery = question
+    ? supabase
+        .from('answers')
+        .select('*')
+        .eq('question_id', (question as Question).id)
+        .eq('status', 'approved')
+        .order('resonance_count', { ascending: false })
+        .order('approved_at', { ascending: false })
+        .limit(3)
+    : Promise.resolve({ data: [] })
+
   const pastQuery = supabase
     .from('questions')
     .select('*')
@@ -36,7 +51,11 @@ async function getHomeData(): Promise<{
     .order('published_at', { ascending: false })
     .limit(6)
 
-  const [{ count }, { data: pastData }] = await Promise.all([answerCountQuery, pastQuery])
+  const [{ count }, { data: pastData }, { data: answersData }] = await Promise.all([
+    answerCountQuery,
+    pastQuery,
+    answersQuery,
+  ])
 
   const pastQuestions: QuestionWithCount[] = await Promise.all(
     ((pastData ?? []) as Question[]).map(async (q) => {
@@ -52,6 +71,7 @@ async function getHomeData(): Promise<{
   return {
     question: question as Question | null,
     answerCount: count ?? 0,
+    answers: (answersData ?? []) as Answer[],
     pastQuestions,
   }
 }
@@ -61,11 +81,12 @@ async function getHomeData(): Promise<{
  *   1. About — the "curious if" wordmark + full mission copy at the very top,
  *      so a first-time visitor lands on *what this is* before anything else.
  *   2. This month's question, posted directly (not hidden behind a wall of
- *      buttons) with a simple read-or-answer call to action.
+ *      buttons) with a simple answer-or-read call to action, plus a preview of
+ *      a few real answers so visitors see what people said without leaving.
  *   3. Past questions below the fold, with a link through to the full archive.
  */
 export default async function HomePage() {
-  const { question, answerCount, pastQuestions } = await getHomeData()
+  const { question, answerCount, answers, pastQuestions } = await getHomeData()
 
   return (
     <>
@@ -76,7 +97,7 @@ export default async function HomePage() {
           {!question ? (
             <HoldingState />
           ) : (
-            <FeaturedQuestion question={question} answerCount={answerCount} />
+            <FeaturedQuestion question={question} answerCount={answerCount} answers={answers} />
           )}
         </div>
         {pastQuestions.length > 0 && <ArchivePreview questions={pastQuestions} />}
@@ -111,7 +132,9 @@ function AboutSection() {
         maxWidth: '780px',
         margin: '0 auto',
         width: '100%',
-        padding: '48px 24px 40px',
+        // Tighter bottom padding so the copy runs straight into the question
+        // (operator: "It should go right into the question").
+        padding: '48px 24px 8px',
       }}
     >
       <h1
@@ -154,42 +177,8 @@ function AboutSection() {
         <p style={{ marginBottom: '24px' }}>
           Answers are read, not scrolled. They arrive as cards you can hold and flip. Some are one line. Some are a page. All of them are real.
         </p>
-        <p style={{ marginBottom: '40px' }}>
+        <p style={{ marginBottom: 0 }}>
           Old questions stay open. There&apos;s no deadline on honesty.
-        </p>
-      </div>
-
-      <div
-        style={{
-          padding: '28px 32px',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          borderLeft: '4px solid #3D5A8C',
-          boxShadow: '0 2px 8px rgba(26,26,46,0.08)',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            fontWeight: 500,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#3D5A8C',
-            marginBottom: '12px',
-          }}
-        >
-          Made by
-        </p>
-        <p
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '16px',
-            color: '#1A1A1A',
-            lineHeight: 1.6,
-          }}
-        >
-          Jon C. — someone who believes the best conversations start with the right question.
         </p>
       </div>
     </section>
@@ -240,13 +229,21 @@ function HoldingState() {
 }
 
 /**
- * This month's question, posted directly under the About copy. The call to
- * action is deliberately simple — read or answer — rather than a row of equal
- * buttons: a primary "Answer this question" (brand terracotta #C4703A) and a
+ * This month's question, posted directly under the About copy, followed by a
+ * preview of a few real answers. The call to action is deliberately simple —
+ * a primary "Answer this question" (brand terracotta #C4703A) leading, then a
  * "Read the answers" companion, with "invite a friend" demoted to a quiet
  * secondary link so the question isn't buried behind buttons.
  */
-function FeaturedQuestion({ question, answerCount }: { question: Question; answerCount: number }) {
+function FeaturedQuestion({
+  question,
+  answerCount,
+  answers,
+}: {
+  question: Question
+  answerCount: number
+  answers: Answer[]
+}) {
   const accentColour = question.accent_colour
 
   const publishedDate = question.published_at ? new Date(question.published_at) : new Date()
@@ -256,12 +253,12 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
   return (
     <div
       style={{
-        flex: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px 24px 48px',
+        // Natural flow (no vertical centering) so the card sits right under the
+        // About copy rather than floating in the middle of the viewport.
+        padding: '8px 24px 40px',
       }}
     >
       <div style={{ maxWidth: '680px', width: '100%' }}>
@@ -321,8 +318,27 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               </p>
             )}
 
-            {/* Read or answer — two clear options, not a wall of buttons */}
+            {/* Answer (primary) leads, read (secondary) follows — operator's
+                confirmed order. Two clear options, not a wall of buttons. */}
             <div className="q-cta-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <Link
+                className="q-cta-btn"
+                href="/answer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '14px 26px',
+                  backgroundColor: '#C4703A', // primary reply CTA — operator brand spec (do not change)
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes; also lifts tap target ≥44px
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Answer this question
+              </Link>
               <Link
                 className="q-cta-btn"
                 href="/browse"
@@ -341,24 +357,6 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                 }}
               >
                 Read the answers
-              </Link>
-              <Link
-                className="q-cta-btn"
-                href="/answer"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '14px 26px',
-                  backgroundColor: '#C4703A', // primary reply CTA — operator brand spec (do not change)
-                  color: '#FFFFFF',
-                  borderRadius: '8px',
-                  fontFamily: 'var(--font-ui)',
-                  fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes; also lifts tap target ≥44px
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                Answer this question
               </Link>
             </div>
 
@@ -379,23 +377,12 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
           </div>
         </div>
 
-        {/* Social proof: answer count */}
-        {answerCount > 0 && (
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Link
-              href="/browse"
-              style={{
-                fontFamily: 'var(--font-ui)',
-                fontSize: '13px',
-                color: '#6E6E6E',
-                textDecoration: 'none',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {answerCount} {answerCount === 1 ? 'answer' : 'answers'} so far —{' '}
-              <span style={{ color: accentColour, fontWeight: 600 }}>Browse →</span>
-            </Link>
-          </div>
+        {/* A few real answers, previewed inline so a visitor can see what
+            people said without clicking through to /browse. Carries the
+            "N answers so far" social proof + a "Browse all" link into its
+            header, so nothing from the old count line is lost. */}
+        {answers.length > 0 && (
+          <AnswersPreview answers={answers} accentColour={accentColour} totalCount={answerCount} />
         )}
 
         {/* Email subscribe strip */}
@@ -411,6 +398,157 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
           .q-cta-btn { justify-content: center; }
         }
       `}</style>
+    </div>
+  )
+}
+
+/**
+ * Inline preview of a few real answers to the spotlight question, shown right
+ * under the question card so visitors get a taste without leaving. MOCKUP for
+ * operator review (see curious-if-manager changelog). Reuses the answer body +
+ * author fields exactly as RealtimeGrid does; carries the "N answers so far"
+ * count and a "Browse all" link in its header.
+ */
+function AnswersPreview({
+  answers,
+  accentColour,
+  totalCount,
+}: {
+  answers: Answer[]
+  accentColour: string
+  totalCount: number
+}) {
+  return (
+    <div style={{ marginTop: '28px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          gap: '12px',
+          marginBottom: '16px',
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#6B6B6B',
+          }}
+        >
+          {totalCount} {totalCount === 1 ? 'answer' : 'answers'} so far
+        </span>
+        <Link
+          href="/browse"
+          style={{
+            fontFamily: 'var(--font-ui)',
+            fontSize: '13px',
+            fontWeight: 600,
+            color: accentColour,
+            textDecoration: 'none',
+          }}
+        >
+          Browse all →
+        </Link>
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: '14px',
+          alignItems: 'start',
+        }}
+      >
+        {answers.map(a => {
+          const author = a.author_attribution?.trim()
+            ? a.author_attribution
+            : a.author_display && a.author_display !== 'Anonymous'
+              ? a.author_display
+              : null
+          return (
+            <PreviewCard
+              key={a.id}
+              body={a.body}
+              author={author}
+              resonance={a.resonance_count ?? 0}
+              accentColour={accentColour}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Read-only preview of a single answer — matches the CueCard front-face look
+ * (cream card, accent stripe, serif body, author + resonance footer) minus the
+ * flip/interaction. Deliberately not linked: seed-answer permalinks 404 by
+ * design, and the point is to read a taste inline (full reading is on /browse).
+ */
+function PreviewCard({
+  body,
+  author,
+  resonance,
+  accentColour,
+}: {
+  body: string
+  author: string | null
+  resonance: number
+  accentColour: string
+}) {
+  return (
+    <div
+      style={{
+        backgroundColor: '#FDFAF3',
+        borderRadius: '10px',
+        overflow: 'hidden',
+        boxShadow: '0 2px 8px rgba(26,26,46,0.10), 0 1px 3px rgba(26,26,46,0.05)',
+      }}
+    >
+      <div style={{ height: '4px', backgroundColor: accentColour }} />
+      <div style={{ padding: '16px 18px' }}>
+        <p
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '15px',
+            lineHeight: 1.65,
+            color: '#1A1A1A',
+            margin: '0 0 12px',
+            display: '-webkit-box',
+            WebkitLineClamp: 5,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {body}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <span
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '12px',
+              fontWeight: 500,
+              color: author ? '#3D3D3D' : '#BABABA',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+            }}
+          >
+            {author ?? 'Anonymous'}
+          </span>
+          {resonance > 0 && (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#BABABA', flexShrink: 0 }}>
+              ◇ {resonance}
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
