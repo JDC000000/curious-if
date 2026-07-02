@@ -7,7 +7,7 @@ const navLinks = [
   { href: '/browse', label: 'Browse' },
   { href: '/answer', label: 'Write' },
   { href: '/archive', label: 'Archive' },
-  { href: '/about', label: 'About' },
+  { href: '/#about', label: 'About' },
 ]
 
 export default function SiteNav() {

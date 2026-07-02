@@ -39,7 +39,7 @@ export default function SiteFooter() {
         {/* Right side — links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           <Link
-            href="/about"
+            href="/#about"
             style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '13px',

@@ -24,6 +24,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    // /about's content was merged into the homepage (intro + spotlight
+    // question + archive preview all live on '/' now, see src/app/page.tsx)
+    // to keep the primary question above the fold without an extra click.
+    // Redirect old /about links/bookmarks straight to the anchor section
+    // that still has the full About copy, rather than leaving a duplicate
+    // near-identical page around.
+    return [{ source: "/about", destination: "/#about", permanent: true }];
+  },
 };
 
 export default nextConfig;
