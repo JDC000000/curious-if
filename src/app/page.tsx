@@ -56,6 +56,14 @@ async function getHomeData(): Promise<{
   }
 }
 
+/**
+ * Homepage order (operator-directed, see curious-if-manager changelog):
+ *   1. About — the "curious if" wordmark + full mission copy at the very top,
+ *      so a first-time visitor lands on *what this is* before anything else.
+ *   2. This month's question, posted directly (not hidden behind a wall of
+ *      buttons) with a simple read-or-answer call to action.
+ *   3. Past questions below the fold, with a link through to the full archive.
+ */
 export default async function HomePage() {
   const { question, answerCount, pastQuestions } = await getHomeData()
 
@@ -63,7 +71,7 @@ export default async function HomePage() {
     <>
       <SiteNav />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <IntroHero />
+        <AboutSection />
         <div id="question" style={{ scrollMarginTop: '72px' }}>
           {!question ? (
             <HoldingState />
@@ -72,7 +80,6 @@ export default async function HomePage() {
           )}
         </div>
         {pastQuestions.length > 0 && <ArchivePreview questions={pastQuestions} />}
-        <AboutSection />
       </main>
       <style>{`
         .archive-deck-card:hover {
@@ -85,37 +92,107 @@ export default async function HomePage() {
 }
 
 /**
- * Condensed intro — sits above the spotlight question so a first-time
- * visitor lands on "what this is" before "answer this". Kept short on
- * purpose: the spotlight question + reply CTA below still need to clear
- * the fold on a 375px-tall mobile viewport. The exact copy is reused
- * verbatim from /about's first and closing lines (see AboutSection below
- * for the full text, still on this same page).
+ * Top-of-page About — the full mission copy (identical wording to the old
+ * /about) now leads the homepage, wider than before so it fills the screen.
+ * Keeps the id="about" anchor so /about (→ /#about 308) and the nav/footer
+ * "About" links still land on this copy — now simply the top of the page.
+ * The wordmark is the page's single <h1>; the month's question below is an
+ * <h2> section under it.
  */
-function IntroHero() {
+function AboutSection() {
   return (
-    <div
+    <section
+      id="about"
       style={{
-        maxWidth: '600px',
+        scrollMarginTop: '72px',
+        // Wider than the old 640px so the copy takes up more of the screen
+        // (operator request). width:100% + horizontal padding means mobile is
+        // still viewport-constrained — this only widens at desktop breakpoints.
+        maxWidth: '780px',
         margin: '0 auto',
         width: '100%',
-        padding: '32px 24px 4px',
-        textAlign: 'center',
+        padding: '48px 24px 40px',
       }}
     >
-      <p
+      <h1
         style={{
           fontFamily: 'var(--font-serif)',
           fontStyle: 'italic',
-          fontSize: 'clamp(16px, 2.4vw, 19px)',
+          fontSize: 'clamp(30px, 5vw, 48px)',
           fontWeight: 400,
-          color: '#3D3D3D',
-          lineHeight: 1.5,
+          color: '#1A1A1A',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.2,
+          marginBottom: '8px',
         }}
       >
-        Once a month, a single question is posted here. Old questions stay open — there&apos;s no deadline on honesty.
-      </p>
-    </div>
+        curious if
+      </h1>
+      <div
+        style={{
+          height: '2px',
+          width: '48px',
+          backgroundColor: '#3D5A8C',
+          marginBottom: '40px',
+        }}
+      />
+
+      <div
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: 'clamp(18px, 2.2vw, 20px)',
+          lineHeight: 1.75,
+          color: '#1A1A1A',
+        }}
+      >
+        <p style={{ marginBottom: '24px' }}>
+          Once a month, a single question is posted here.
+        </p>
+        <p style={{ marginBottom: '24px' }}>
+          Not a poll. Not a debate. Just one question — the kind you turn over in your head on a long walk or a quiet morning — and space for anyone to answer it honestly.
+        </p>
+        <p style={{ marginBottom: '24px' }}>
+          Answers are read, not scrolled. They arrive as cards you can hold and flip. Some are one line. Some are a page. All of them are real.
+        </p>
+        <p style={{ marginBottom: '40px' }}>
+          Old questions stay open. There&apos;s no deadline on honesty.
+        </p>
+      </div>
+
+      <div
+        style={{
+          padding: '28px 32px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '12px',
+          borderLeft: '4px solid #3D5A8C',
+          boxShadow: '0 2px 8px rgba(26,26,46,0.08)',
+        }}
+      >
+        <p
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            fontWeight: 500,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: '#3D5A8C',
+            marginBottom: '12px',
+          }}
+        >
+          Made by
+        </p>
+        <p
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '16px',
+            color: '#1A1A1A',
+            lineHeight: 1.6,
+          }}
+        >
+          Jon C. — someone who believes the best conversations start with the right question.
+        </p>
+      </div>
+    </section>
   )
 }
 
@@ -162,6 +239,13 @@ function HoldingState() {
   )
 }
 
+/**
+ * This month's question, posted directly under the About copy. The call to
+ * action is deliberately simple — read or answer — rather than a row of equal
+ * buttons: a primary "Answer this question" (brand terracotta #C4703A) and a
+ * "Read the answers" companion, with "invite a friend" demoted to a quiet
+ * secondary link so the question isn't buried behind buttons.
+ */
 function FeaturedQuestion({ question, answerCount }: { question: Question; answerCount: number }) {
   const accentColour = question.accent_colour
 
@@ -192,7 +276,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
         >
           <div style={{ height: '6px', backgroundColor: accentColour }} />
 
-          <div style={{ padding: '36px 40px 32px' }}>
+          <div className="q-card-body" style={{ padding: '36px 40px 32px' }}>
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
@@ -207,7 +291,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               {monthName} {year} · Curious If
             </div>
 
-            <h1
+            <h2
               style={{
                 fontFamily: 'var(--font-serif)',
                 fontSize: 'clamp(24px, 4vw, 34px)',
@@ -219,7 +303,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               }}
             >
               {question.text}
-            </h1>
+            </h2>
 
             {question.whisper_line && (
               <p
@@ -237,14 +321,35 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            {/* Read or answer — two clear options, not a wall of buttons */}
+            <div className="q-cta-row" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <Link
+                className="q-cta-btn"
+                href="/browse"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  color: '#1A1A1A', // ink text (not the accent) so it clears AA at this size
+                  border: `2px solid ${accentColour}`,
+                  borderRadius: '8px',
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                Read the answers
+              </Link>
+              <Link
+                className="q-cta-btn"
                 href="/answer"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '14px 26px',
-                  backgroundColor: '#C4703A', // primary reply CTA — operator brand spec
+                  backgroundColor: '#C4703A', // primary reply CTA — operator brand spec (do not change)
                   color: '#FFFFFF',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
@@ -253,43 +358,22 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                   textDecoration: 'none',
                 }}
               >
-                Write your reply
+                Answer this question
               </Link>
-              <Link
-                href="/browse"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  color: accentColour,
-                  border: `2px solid ${accentColour}`,
-                  borderRadius: '8px',
-                  fontFamily: 'var(--font-ui)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  textDecoration: 'none',
-                }}
-              >
-                Browse answers
-              </Link>
+            </div>
+
+            {/* Invite — demoted to a quiet secondary link, not a co-equal button */}
+            <div style={{ marginTop: '18px' }}>
               <Link
                 href="/invite"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  color: '#6B6B6B',
-                  border: '2px solid #E0D9C8',
-                  borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
-                  fontSize: '15px',
-                  fontWeight: 600,
+                  fontSize: '14px',
+                  color: '#6E6E6E', // AA on white (≈4.6:1)
                   textDecoration: 'none',
                 }}
               >
-                Invite a friend
+                Or invite a friend to answer →
               </Link>
             </div>
           </div>
@@ -317,15 +401,25 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
         {/* Email subscribe strip */}
         <HomeSubscribeStrip accentColour={accentColour} />
       </div>
+      <style>{`
+        /* Small phones (≈320px): tighten the card's inner padding and stack the
+           two CTAs full-width so "Read the answers" / "Answer this question"
+           each keep to a single line and read as a clean pair. */
+        @media (max-width: 480px) {
+          .q-card-body { padding: 28px 22px 26px !important; }
+          .q-cta-row { flex-direction: column; align-items: stretch !important; }
+          .q-cta-btn { justify-content: center; }
+        }
+      `}</style>
     </div>
   )
 }
 
 /**
- * Below-the-fold archive preview — most recent past questions, reusing the
- * same ArchiveCard used by the full /archive grid. Deliberately capped
- * (not the full infinite list) with a link through to /archive for the
- * complete set.
+ * Below-the-fold archive preview — the very bottom of the page (operator
+ * request: past questions belong at the end). Most recent past questions,
+ * reusing the same ArchiveCard as the full /archive grid, capped with a
+ * "See full archive" link through to the complete set.
  */
 function ArchivePreview({ questions }: { questions: QuestionWithCount[] }) {
   return (
@@ -334,7 +428,9 @@ function ArchivePreview({ questions }: { questions: QuestionWithCount[] }) {
         maxWidth: '1120px',
         margin: '0 auto',
         width: '100%',
-        padding: '16px 24px 24px',
+        padding: '32px 24px 56px',
+        borderTop: '1px solid rgba(26,26,26,0.08)',
+        marginTop: '16px',
       }}
     >
       <div
@@ -383,148 +479,6 @@ function ArchivePreview({ questions }: { questions: QuestionWithCount[] }) {
         {questions.map(q => (
           <ArchiveCard key={q.id} question={q} />
         ))}
-      </div>
-    </section>
-  )
-}
-
-/**
- * Full About content — the complete /about copy, unchanged except the
- * "Made by" attribution (see AGENTS.md / operator request). Lives as an
- * anchor section on the homepage; /about redirects here (see
- * next.config.ts). Kept below the fold, after the spotlight question and
- * archive preview, so it doesn't compete with the primary "answer the
- * question" above-the-fold goal.
- */
-function AboutSection() {
-  return (
-    <section
-      id="about"
-      style={{
-        scrollMarginTop: '72px',
-        maxWidth: '640px',
-        margin: '0 auto',
-        width: '100%',
-        padding: '64px 24px 80px',
-        borderTop: '1px solid rgba(26,26,26,0.08)',
-      }}
-    >
-      <h2
-        style={{
-          fontFamily: 'var(--font-serif)',
-          fontStyle: 'italic',
-          fontSize: 'clamp(28px, 4.5vw, 40px)',
-          fontWeight: 400,
-          color: '#1A1A1A',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-          marginBottom: '8px',
-        }}
-      >
-        curious if
-      </h2>
-      <div
-        style={{
-          height: '2px',
-          width: '48px',
-          backgroundColor: '#3D5A8C',
-          marginBottom: '40px',
-        }}
-      />
-
-      <div
-        style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '18px',
-          lineHeight: 1.75,
-          color: '#1A1A1A',
-        }}
-      >
-        <p style={{ marginBottom: '24px' }}>
-          Once a month, a single question is posted here.
-        </p>
-        <p style={{ marginBottom: '24px' }}>
-          Not a poll. Not a debate. Just one question — the kind you turn over in your head on a long walk or a quiet morning — and space for anyone to answer it honestly.
-        </p>
-        <p style={{ marginBottom: '24px' }}>
-          Answers are read, not scrolled. They arrive as cards you can hold and flip. Some are one line. Some are a page. All of them are real.
-        </p>
-        <p style={{ marginBottom: '40px' }}>
-          Old questions stay open. There&apos;s no deadline on honesty.
-        </p>
-      </div>
-
-      <div
-        style={{
-          padding: '28px 32px',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '12px',
-          borderLeft: '4px solid #3D5A8C',
-          boxShadow: '0 2px 8px rgba(26,26,46,0.08)',
-          marginBottom: '40px',
-        }}
-      >
-        <p
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            fontWeight: 500,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: '#3D5A8C',
-            marginBottom: '12px',
-          }}
-        >
-          Made by
-        </p>
-        <p
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '16px',
-            color: '#1A1A1A',
-            lineHeight: 1.6,
-          }}
-        >
-          Jon C. — someone who believes the best conversations start with the right question.
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        <Link
-          href="#question"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '12px 24px',
-            backgroundColor: '#3D5A8C',
-            color: '#FFFFFF',
-            borderRadius: '8px',
-            fontFamily: 'var(--font-ui)',
-            fontSize: '14px',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          See this month&apos;s question
-        </Link>
-        <Link
-          href="/browse"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '12px 24px',
-            backgroundColor: 'transparent',
-            color: '#3D5A8C',
-            border: '2px solid #3D5A8C',
-            borderRadius: '8px',
-            fontFamily: 'var(--font-ui)',
-            fontSize: '14px',
-            fontWeight: 600,
-            textDecoration: 'none',
-          }}
-        >
-          Read answers
-        </Link>
       </div>
     </section>
   )
