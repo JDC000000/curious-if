@@ -262,7 +262,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
                   alignItems: 'center',
                   padding: '12px 24px',
                   backgroundColor: 'transparent',
-                  color: accentColour,
+                  color: '#6E6E6E', // a11y: was accentColour (fails AA as small text, e.g. #C47B20 on white = 3.39:1); border keeps the accent motif
                   border: `2px solid ${accentColour}`,
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
@@ -309,7 +309,7 @@ function FeaturedQuestion({ question, answerCount }: { question: Question; answe
               }}
             >
               {answerCount} {answerCount === 1 ? 'answer' : 'answers'} so far —{' '}
-              <span style={{ color: accentColour, fontWeight: 600 }}>Browse →</span>
+              <span style={{ color: '#6E6E6E', fontWeight: 600 }}>Browse →</span>{/* a11y: was accentColour, e.g. #C47B20 on cream = 3.06:1 */}
             </Link>
           </div>
         )}
