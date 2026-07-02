@@ -16,7 +16,7 @@
  * CRITICAL: neither key may be rotated after launch — doing so makes existing
  * ciphertext undecryptable / existing blind indexes unmatchable.
  */
-import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'crypto'
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'crypto'
 
 const ALGORITHM = 'aes-256-gcm'
 const IV_BYTES = 12 // 96-bit nonce — the standard/most efficient size for GCM
@@ -96,4 +96,16 @@ export function decryptEmail(payload: string): string {
 export function blindIndex(email: string): string {
   const key = requireHexKey('BLIND_INDEX_SECRET')
   return createHmac('sha256', key).update(normalizeEmail(email)).digest('hex')
+}
+
+/**
+ * Hash a high-entropy secret (e.g. an invite token) for storage/lookup so the
+ * raw value never rests in the database. A plain SHA-256 is sufficient here
+ * (unlike the keyed `blindIndex` for low-entropy emails): the token is a random
+ * 32-byte value, so it is not brute-forceable from the stored hash. The raw
+ * token still travels in the invite URL; only `hashToken(token)` is persisted,
+ * and lookups compare against the hash of the incoming token.
+ */
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
 }
