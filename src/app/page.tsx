@@ -229,11 +229,30 @@ function HoldingState() {
 }
 
 /**
+ * Darken a per-month accent hex enough to read as small metadata text on the
+ * cream card at WCAG AA (the raw mid-tone accents fail at 11px). Generalises the
+ * Option-C mockup's hand-darkened ochre eyebrow to every month's accent, so the
+ * date stamp stays tinted with the month's colour without a new hardcoded token.
+ */
+function darkenAccent(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim())
+  if (!m) return '#6B6B6B'
+  const n = parseInt(m[1], 16)
+  const scale = 0.55
+  const r = Math.round(((n >> 16) & 0xff) * scale)
+  const g = Math.round(((n >> 8) & 0xff) * scale)
+  const b = Math.round((n & 0xff) * scale)
+  return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
+}
+
+/**
  * This month's question, posted directly under the About copy, followed by a
- * preview of a few real answers. The call to action is deliberately simple —
- * a primary "Answer this question" (brand terracotta #C4703A) leading, then a
- * "Read the answers" companion, with "invite a friend" demoted to a quiet
- * secondary link so the question isn't buried behind buttons.
+ * preview of a few real answers. Presented as the approved Option C "tactile
+ * cue card" — cream stock, ink frame, accent spine down the left like a filing
+ * tab, dashed rule under the date stamp, hard offset stacked-paper shadow. The
+ * call to action is deliberately simple — a primary "Answer this question"
+ * (brand terracotta #C4703A) leading, then a "Read the answers" companion, with
+ * "invite a friend" demoted to a quiet secondary link.
  */
 function FeaturedQuestion({
   question,
@@ -245,6 +264,7 @@ function FeaturedQuestion({
   answers: Answer[]
 }) {
   const accentColour = question.accent_colour
+  const eyebrowColour = darkenAccent(accentColour)
 
   const publishedDate = question.published_at ? new Date(question.published_at) : new Date()
   const monthName = publishedDate.toLocaleString('en-GB', { month: 'long' }).toUpperCase()
@@ -257,43 +277,70 @@ function FeaturedQuestion({
         flexDirection: 'column',
         alignItems: 'center',
         // Natural flow (no vertical centering) so the card sits right under the
-        // About copy rather than floating in the middle of the viewport.
-        padding: '8px 24px 40px',
+        // About copy; a little top room lets the offset shadow breathe.
+        padding: '20px 24px 40px',
       }}
     >
-      <div style={{ maxWidth: '680px', width: '100%' }}>
-        {/* Question card */}
+      <div style={{ maxWidth: '760px', width: '100%' }}>
+        {/* Question card — Option C "tactile cue card": cream stock, ink frame,
+            accent spine down the left like a filing tab, dashed rule under the
+            date stamp, and a hard offset (no-blur) stacked-paper drop-shadow. */}
         <div
+          className="q-ccard"
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 24px rgba(26,26,46,0.10), 0 1px 4px rgba(26,26,46,0.06)',
+            position: 'relative',
+            backgroundColor: '#FCF7EC', // cream card stock
+            border: '1.5px solid #23201C', // ink frame
+            borderRadius: '5px',
+            boxShadow: '14px 14px 0 #E7D2AE', // hard offset shadow, no blur
           }}
         >
-          <div style={{ height: '6px', backgroundColor: accentColour }} />
+          {/* Accent spine / filing tab — per-month accentColour */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: '8px',
+              backgroundColor: accentColour,
+              borderRadius: '4px 0 0 4px',
+            }}
+          />
 
-          <div className="q-card-body" style={{ padding: '36px 40px 32px' }}>
+          <div className="q-card-body" style={{ padding: '42px 46px 40px 54px' }}>
             <div
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
                 fontWeight: 500,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: '#6B6B6B',
-                marginBottom: '20px',
+                color: eyebrowColour, // darkened per-month accent — reads on cream at AA
+                marginBottom: '14px',
               }}
             >
               {monthName} {year} · Curious If
             </div>
 
+            {/* Dashed rule under the date stamp */}
+            <div
+              aria-hidden="true"
+              style={{
+                height: '1px',
+                marginBottom: '26px',
+                background:
+                  'repeating-linear-gradient(90deg,#D8C3A0 0,#D8C3A0 7px,transparent 7px,transparent 14px)',
+              }}
+            />
+
             <h2
               style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: 'clamp(24px, 4vw, 34px)',
+                fontSize: 'clamp(28px, 4.2vw, 42px)',
                 fontWeight: 700,
-                lineHeight: 1.3,
+                lineHeight: 1.22,
                 color: '#1A1A1A',
                 letterSpacing: '-0.02em',
                 marginBottom: question.whisper_line ? '16px' : '32px',
@@ -307,10 +354,10 @@ function FeaturedQuestion({
                 style={{
                   fontFamily: 'var(--font-serif)',
                   fontStyle: 'italic',
-                  fontSize: '17px',
+                  fontSize: '19px',
                   fontWeight: 400,
-                  color: '#6B6B6B', // a11y: was rgba(26,26,26,0.55)=~#818181 on white (3.89:1); #6B6B6B clears AA 4.5:1
-                  lineHeight: 1.55,
+                  color: '#6B6B6B', // AA on cream card
+                  lineHeight: 1.5,
                   marginBottom: '32px',
                 }}
               >
@@ -389,11 +436,12 @@ function FeaturedQuestion({
         <HomeSubscribeStrip accentColour={accentColour} />
       </div>
       <style>{`
-        /* Small phones (≈320px): tighten the card's inner padding and stack the
-           two CTAs full-width so "Read the answers" / "Answer this question"
-           each keep to a single line and read as a clean pair. */
+        /* Small phones (≈320-480px): soften the offset shadow, tighten the
+           card's inner padding (matching the approved mockup), and stack the
+           two CTAs full-width so both keep to a single line. */
         @media (max-width: 480px) {
-          .q-card-body { padding: 28px 22px 26px !important; }
+          .q-ccard { box-shadow: 8px 8px 0 #E7D2AE !important; }
+          .q-card-body { padding: 28px 22px 28px 30px !important; }
           .q-cta-row { flex-direction: column; align-items: stretch !important; }
           .q-cta-btn { justify-content: center; }
         }
