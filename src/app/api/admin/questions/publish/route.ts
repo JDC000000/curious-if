@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 export async function POST(request: NextRequest) {
-  // Verify admin session
+  // Verify admin session — defense-in-depth on top of proxy.ts middleware,
+  // not a replacement for it (see architecture.md).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -3,15 +3,17 @@ import { revalidatePath } from 'next/cache'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
 import { decrypt, decryptEmail } from '@/lib/crypto'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 const SITE = 'https://curiousif.blog'
 
 export async function POST(request: NextRequest) {
-  // Verify admin session
+  // Verify admin session — defense-in-depth on top of proxy.ts middleware,
+  // not a replacement for it (see architecture.md).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

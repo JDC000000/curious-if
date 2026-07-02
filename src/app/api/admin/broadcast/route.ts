@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { decrypt, decryptEmail } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 import { escapeHtml } from '@/lib/escapeHtml'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 interface Question {
   id: string
@@ -167,10 +168,11 @@ Unsubscribe: ${unsubscribeUrl}`
 }
 
 export async function GET() {
-  // Verify admin session
+  // Verify admin session — defense-in-depth on top of proxy.ts middleware,
+  // not a replacement for it (see architecture.md).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -209,10 +211,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  // Verify admin session
+  // Verify admin session — defense-in-depth on top of proxy.ts middleware,
+  // not a replacement for it (see architecture.md).
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
