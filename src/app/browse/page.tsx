@@ -75,7 +75,12 @@ export default async function BrowsePage() {
   return (
     <>
       <SiteNav />
-      <main style={{ maxWidth: '1120px', margin: '0 auto', padding: '48px 24px' }}>
+      {/* width:100% is load-bearing — see browse/[year]/[month]/page.tsx: <main>
+          is a flex child of <body> with `margin: 0 auto`, whose auto cross-axis
+          margins suppress flexbox's default align-items:stretch, so without an
+          explicit width it shrinks to content width instead of filling to
+          max-width (measured ~1015px live, not 1120). */}
+      <main style={{ width: '100%', maxWidth: '1120px', margin: '0 auto', padding: '48px 24px' }}>
         {/* Header */}
         <div style={{ marginBottom: '48px' }}>
           <div
