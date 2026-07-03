@@ -169,16 +169,13 @@ function AboutSection() {
         }}
       >
         <p style={{ marginBottom: '24px' }}>
-          Once a month, a single question is posted here.
+          Once a month, one honest question — not a poll, not a debate. Just something worth answering.
         </p>
         <p style={{ marginBottom: '24px' }}>
-          Not a poll. Not a debate. Just one question — the kind you turn over in your head on a long walk or a quiet morning — and space for anyone to answer it honestly.
-        </p>
-        <p style={{ marginBottom: '24px' }}>
-          Answers are read, not scrolled. They arrive as cards you can hold and flip. Some are one line. Some are a page. All of them are real.
+          Answers arrive as cards to hold and flip. Some are a line. Some are a page. All are real.
         </p>
         <p style={{ marginBottom: 0 }}>
-          Old questions stay open. There&apos;s no deadline on honesty.
+          Old questions stay open. No deadline on honesty.
         </p>
       </div>
     </section>
