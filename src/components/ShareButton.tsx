@@ -7,9 +7,13 @@ interface ShareButtonProps {
   url: string
   text?: string
   accentColour?: string
+  /** Icon-only, transparent, 44×44 tap-target variant for placing on a card footer
+      (e.g. CueCard's flipped face) next to the resonance/permalink controls. Same
+      share behaviour; just sized/coloured to sit among icon controls, not as a pill. */
+  compact?: boolean
 }
 
-export default function ShareButton({ url, text, accentColour = '#3D5A8C' }: ShareButtonProps) {
+export default function ShareButton({ url, text, accentColour = '#3D5A8C', compact = false }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
@@ -45,6 +49,42 @@ export default function ShareButton({ url, text, accentColour = '#3D5A8C' }: Sha
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
+  }
+
+  if (compact) {
+    return (
+      <button
+        onClick={handleShare}
+        aria-label={copied ? 'Link copied' : 'Share this answer'}
+        title={copied ? 'Link copied' : 'Share this answer'}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: accentColour, // icon colour; on the dark flipped face this is the per-question accent
+          padding: '2px',
+          margin: '-12px 0', // keep 44px tap target without inflating the footer row (matches resonance button)
+          minWidth: '44px',
+          minHeight: '44px',
+          lineHeight: 1,
+          flexShrink: 0,
+          transition: 'color 150ms ease',
+        }}
+      >
+        {copied ? (
+          <span style={{ fontSize: '15px' }}>✓</span>
+        ) : (
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <polyline points="16 6 12 2 8 6" />
+            <line x1="12" y1="2" x2="12" y2="15" />
+          </svg>
+        )}
+      </button>
+    )
   }
 
   return (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import ShareButton from './ShareButton'
 
 interface CueCardProps {
   answer: string
@@ -339,35 +340,50 @@ export default function CueCard({
                     </a>
                   )}
                 </div>
-                {/* Resonance on back — same button, dark theme colours handled via accentColour */}
-                <button
-                  onClick={handleResonance}
-                  aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: answerId ? 'pointer' : 'default',
-                    color: resonated ? accentColour : 'rgba(248,243,233,0.3)',
-                    transition: 'color 150ms ease',
-                    padding: '2px 0',
-                    margin: '-12px 0',
-                    minWidth: '44px',
-                    minHeight: '44px',
-                    justifyContent: 'center',
-                    lineHeight: 1,
-                    flexShrink: 0,
-                  }}
-                >
-                  <span style={{ fontSize: '16px' }}>{resonated ? '◆' : '◇'}</span>
-                  {resonanceCount > 0 && (
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500 }}>
-                      {resonanceCount}
+                {/* Share + resonance, grouped on the right */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                  {answerId && (
+                    <span
+                      onClick={e => e.stopPropagation()}
+                      style={{ display: 'inline-flex' }}
+                    >
+                      <ShareButton
+                        compact
+                        url={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'}/answers/${answerId}`}
+                        accentColour={accentColour}
+                      />
                     </span>
                   )}
-                </button>
+                  {/* Resonance on back — same button, dark theme colours handled via accentColour */}
+                  <button
+                    onClick={handleResonance}
+                    aria-label={resonated ? 'Remove resonance' : 'This resonated with me'}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: answerId ? 'pointer' : 'default',
+                      color: resonated ? accentColour : 'rgba(248,243,233,0.3)',
+                      transition: 'color 150ms ease',
+                      padding: '2px 0',
+                      margin: '-12px 0',
+                      minWidth: '44px',
+                      minHeight: '44px',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>{resonated ? '◆' : '◇'}</span>
+                    {resonanceCount > 0 && (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500 }}>
+                        {resonanceCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
