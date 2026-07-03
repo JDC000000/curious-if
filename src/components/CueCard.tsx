@@ -125,6 +125,20 @@ export default function CueCard({
     </button>
   )
 
+  // Share — same compact button used on BOTH card faces; the wrapping span stops the
+  // click bubbling to the card root (which would flip the card). Rendered whenever the
+  // answer has an id — now every approved answer, including short non-flipping ones,
+  // so short cards (which never show a back face) still get a working Share on the front.
+  const shareButton = answerId ? (
+    <span onClick={e => e.stopPropagation()} style={{ display: 'inline-flex' }}>
+      <ShareButton
+        compact
+        url={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'}/answers/${answerId}`}
+        accentColour={accentColour}
+      />
+    </span>
+  ) : null
+
   const authorBlock = (
     <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
       {author ? (
@@ -253,6 +267,7 @@ export default function CueCard({
                     flip →
                   </span>
                 )}
+                {shareButton}
                 {resonanceButton}
               </div>
             </div>
@@ -342,18 +357,7 @@ export default function CueCard({
                 </div>
                 {/* Share + resonance, grouped on the right */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-                  {answerId && (
-                    <span
-                      onClick={e => e.stopPropagation()}
-                      style={{ display: 'inline-flex' }}
-                    >
-                      <ShareButton
-                        compact
-                        url={`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://curiousif.blog'}/answers/${answerId}`}
-                        accentColour={accentColour}
-                      />
-                    </span>
-                  )}
+                  {shareButton}
                   {/* Resonance on back — same button, dark theme colours handled via accentColour */}
                   <button
                     onClick={handleResonance}
