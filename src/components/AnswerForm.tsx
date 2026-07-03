@@ -146,7 +146,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
               lineHeight: 1.6,
             }}
           >
-            It&apos;s under review. Once approved it will appear on the browse page — sometimes within minutes.
+            It&apos;s under review and will appear shortly.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
                 lineHeight: 1.6,
               }}
             >
-              Leave your email and we&apos;ll let you know when your answer is published. We&apos;ll also send you the next question — one per month, no more.
+              Leave your email and we&apos;ll send you the next question — one per month, no more.
             </p>
 
             {modalError && (
