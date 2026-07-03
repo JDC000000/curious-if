@@ -22,7 +22,11 @@ async function getAnswer(id: string): Promise<{ answer: Answer; question: Questi
     .select('*')
     .eq('id', id)
     .eq('status', 'approved') // 404 for pending/rejected
-    .eq('is_seed', false) // seed answers have no shareable permalinks
+    // Seed answers ARE shareable — operator (Jon) reversed the seed-permalink-404
+    // decision 2026-07-03 (see curious-if-manager/decisions.md): real visitors were
+    // hitting dead links while seed content is still prominent in Browse/Archive.
+    // (The OG image route keeps its own is_seed filter and serves the generic
+    // FallbackCard for seeds — a valid share image, not a 404.)
     .single()
 
   if (!answer) return null
