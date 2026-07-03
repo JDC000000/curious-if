@@ -54,7 +54,7 @@ export default function SiteFooter() {
             href="https://www.instagram.com/curiousifblog"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="curious if on Instagram"
+            aria-label="@curiousifblog on Instagram"
             style={{
               display: 'flex',
               alignItems: 'center',

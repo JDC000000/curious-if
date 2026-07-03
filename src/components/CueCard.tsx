@@ -179,7 +179,7 @@ export default function CueCard({
       onClick={handleClick}
       role={needsFlip ? 'button' : undefined}
       tabIndex={needsFlip ? 0 : undefined}
-      aria-label={needsFlip ? (isFlipped ? 'Tap to flip back' : 'Tap to read full answer') : undefined}
+      aria-label={needsFlip ? (isFlipped ? 'Flip back to the answer preview' : 'Flip to read the full answer') : undefined}
       onKeyDown={handleKey}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -347,8 +347,10 @@ export default function CueCard({
                         textDecoration: 'none',
                         letterSpacing: '0.04em',
                         opacity: 0.8,
-                        display: 'inline-block',
-                        marginTop: '2px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        minHeight: '44px', // a11y tap target (was ~15px tall) — a real destination now that seed permalinks return 200
+                        marginTop: '-8px', // pull the taller hit area up so it doesn't push the back-face footer down much
                       }}
                     >
                       permalink ↗

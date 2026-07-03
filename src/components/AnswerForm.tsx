@@ -457,8 +457,8 @@ export default function AnswerForm({ questionId, accentColour, inviteRef }: Answ
             border: 'none',
             borderRadius: '8px',
             fontFamily: 'var(--font-ui)',
-            fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes (padding already ≥44px tall)
-            fontWeight: 600,
+            fontSize: '19px', // a11y: ≥19px AND fontWeight 700 = WCAG large-bold, so #FFF on #C4703A clears 3:1 (padding already ≥44px tall)
+            fontWeight: 700, // 700 (not 600) required for the large-bold contrast exception (test ENABLED: type text first)
             whiteSpace: 'nowrap', // keep "Submit answer" on one line (mobile QA pass 3 finding 2)
             flexShrink: 0,
             cursor: canSubmit ? 'pointer' : 'not-allowed',

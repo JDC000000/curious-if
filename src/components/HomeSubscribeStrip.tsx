@@ -113,6 +113,7 @@ export default function HomeSubscribeStrip({ accentColour }: HomeSubscribeStripP
           disabled={state === 'submitting' || !email.trim()}
           style={{
             padding: '10px 20px',
+            minHeight: '44px', // a11y: stays ≥44px even when the button wraps to its own line at 320px (was 41px there); independent of the flex-stretch that keeps it tall at ≥375px
             backgroundColor: state === 'submitting' ? '#6E6E6E' : accentColour,
             color: '#FFFFFF',
             border: 'none',

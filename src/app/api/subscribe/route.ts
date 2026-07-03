@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
 import { rateGuard } from '@/lib/rateLimit'
@@ -254,30 +254,41 @@ export async function POST(request: NextRequest) {
     // If auto-approve already ran, fire the "answer is live" email now
     if (answerData?.status === 'approved') {
       answerAlreadyApproved = true
-      void sendAnswerLiveEmail(
-        email,
-        name ?? null,
-        answerId,
-        answerData.body,
-        answerData.question?.text ?? '',
-        answerData.question?.published_at ?? null,
-      )
+      // after() keeps the serverless invocation alive until the send completes — a bare
+      // fire-and-forget is killed when the function returns on Vercel (same failure mode
+      // + fix as /api/invite and the /api/answers moderation trigger).
+      after(async () => {
+        await sendAnswerLiveEmail(
+          email,
+          name ?? null,
+          answerId,
+          answerData.body,
+          answerData.question?.text ?? '',
+          answerData.question?.published_at ?? null,
+        )
+      })
     }
   }
 
-  // Add to Resend Contacts (fire-and-forget)
-  void addToResendContacts(email, name)
+  // Add to Resend Contacts — after() so it survives the response returning.
+  after(async () => {
+    await addToResendContacts(email, name)
+  })
 
   // Send welcome email only to new subscribers who don't have an answer live yet
   // (if their answer is already live, that email replaces the welcome context)
   if (isNewSubscriber && !answerAlreadyApproved) {
-    void sendWelcomeEmail(email, name)
+    after(async () => {
+      await sendWelcomeEmail(email, name)
+    })
   }
 
   // Reciprocal notification — if this person was nominated for this question,
   // notify the nominator they answered. Fire-and-forget.
   if (answerId) {
-    void triggerReciprocalNotification(email, answerId, name ?? null)
+    after(async () => {
+      await triggerReciprocalNotification(email, answerId, name ?? null)
+    })
   }
 
   return NextResponse.json({ success: true })

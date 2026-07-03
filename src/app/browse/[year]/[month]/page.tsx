@@ -160,8 +160,8 @@ export default async function MonthBrowsePage({ params }: PageProps) {
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
-                fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) on #C4703A; tap target ≥44px
-                fontWeight: 600,
+                fontSize: '19px', // a11y: ≥19px AND fontWeight 700 = WCAG large-bold, clears 3:1 on #C4703A; tap target ≥44px
+                fontWeight: 700, // 700 (not 600) required for the large-bold contrast exception
                 textDecoration: 'none',
               }}
             >

@@ -114,7 +114,7 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
               fontWeight: 500,
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: question.accent_colour,
+              color: '#6E6E6E', // a11y: was raw accentColour (fails AA as 11px text, ~3.06:1); #6E6E6E secondary-ink per the 5ef8d17 sweep (this file was missed)
               marginBottom: '8px',
             }}
           >
@@ -183,8 +183,8 @@ export default async function AnswerPermalinkPage({ params }: PageProps) {
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontFamily: 'var(--font-ui)',
-                fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) on #C4703A; tap target ≥44px
-                fontWeight: 600,
+                fontSize: '19px', // a11y: ≥19px AND fontWeight 700 = WCAG large-bold, clears 3:1 on #C4703A; tap target ≥44px
+                fontWeight: 700, // 700 (not 600) required for the large-bold contrast exception
                 textDecoration: 'none',
               }}
             >

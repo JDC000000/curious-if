@@ -5,7 +5,7 @@ import HomeSubscribeStrip from '@/components/HomeSubscribeStrip'
 import ArchiveCard, { QuestionWithCount } from '@/components/ArchiveCard'
 import Link from 'next/link'
 
-export const revalidate = 3600
+export const revalidate = 60 // was 3600; match /browse so pulled/moderated content clears within ~60s, not up to an hour
 
 async function getHomeData(): Promise<{
   question: Question | null
@@ -376,8 +376,8 @@ function FeaturedQuestion({
                   color: '#FFFFFF',
                   borderRadius: '8px',
                   fontFamily: 'var(--font-ui)',
-                  fontSize: '19px', // a11y: ≥19px bold = WCAG large text (3:1) so #FFF on #C4703A passes; also lifts tap target ≥44px
-                  fontWeight: 600,
+                  fontSize: '19px', // a11y: ≥19px AND fontWeight 700 = WCAG large-bold, so #FFF on #C4703A clears the 3:1 threshold; also ≥44px tap target
+                  fontWeight: 700, // MUST be 700 (not 600) for the large-bold contrast exception to apply
                   textDecoration: 'none',
                 }}
               >

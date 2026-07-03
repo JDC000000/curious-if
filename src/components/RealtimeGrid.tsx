@@ -103,7 +103,10 @@ export default function RealtimeGrid({
     fontSize: '11px',
     fontWeight: 500,
     letterSpacing: '0.06em',
-    padding: '5px 12px',
+    padding: '5px 14px',
+    minHeight: '44px', // a11y touch target (was ~28.5px tall)
+    display: 'inline-flex',
+    alignItems: 'center',
     borderRadius: '5px',
     border: '1px solid #E0D9C8',
     cursor: 'pointer',
