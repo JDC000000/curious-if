@@ -37,7 +37,7 @@ export default function SiteFooter() {
         </Link>
 
         {/* Right side — links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
           <Link
             href="/#about"
             style={{
@@ -48,6 +48,30 @@ export default function SiteFooter() {
             }}
           >
             About
+          </Link>
+
+          <Link
+            href="/privacy"
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '13px',
+              color: '#6E6E6E',
+              textDecoration: 'none',
+            }}
+          >
+            Privacy
+          </Link>
+
+          <Link
+            href="/terms"
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '13px',
+              color: '#6E6E6E',
+              textDecoration: 'none',
+            }}
+          >
+            Terms
           </Link>
 
           <a
