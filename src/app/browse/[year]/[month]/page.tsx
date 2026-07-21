@@ -4,6 +4,7 @@ import SiteNav from '@/components/SiteNav'
 import RealtimeGrid from '@/components/RealtimeGrid'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { parseArchiveMonthParams } from '@/lib/archiveDate'
 
 export const revalidate = 300
 
@@ -65,13 +66,13 @@ async function getQuestionForMonth(year: number, month: number): Promise<{
 
 export default async function MonthBrowsePage({ params }: PageProps) {
   const { year: yearStr, month: monthStr } = await params
-  const year = parseInt(yearStr, 10)
-  const month = parseInt(monthStr, 10)
+  const archiveMonth = parseArchiveMonthParams(yearStr, monthStr)
 
-  if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+  if (!archiveMonth) {
     notFound()
   }
 
+  const { year, month } = archiveMonth
   const { question, heroAnswers, answers } = await getQuestionForMonth(year, month)
 
   if (!question) {
