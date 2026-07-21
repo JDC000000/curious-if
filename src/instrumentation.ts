@@ -1,19 +1,26 @@
 import { type Instrumentation } from 'next'
+import * as Sentry from '@sentry/nextjs'
 
 /**
- * Lightweight production error monitoring.
+ * Production error monitoring.
  *
  * Next.js calls `onRequestError` for uncaught server-side errors across API
- * routes, Route Handlers, Server Components, and Server Actions — no manual
- * try/catch needed at each call site. We turn that into a plain ops-alert email
- * to the operator (ADMIN_EMAIL) via the already-configured Resend setup (same
- * RESEND_API_KEY + sending domain as every other email in this codebase).
+ * routes, Route Handlers, Server Components, and Server Actions. Sentry is the
+ * canonical error/crash capture surface; the existing Resend email alert stays
+ * as a low-volume operator backstop.
  *
- * Deliberately minimal (per the brief): no new dependency, no third-party
- * observability service, no dashboards — just "email me when prod actually
- * breaks", with a basic in-memory cooldown so a recurring error can't spam the
- * inbox. Runs in both the Node.js and Edge runtimes (only uses fetch/Date/env).
+ * Runs in both the Node.js and Edge runtimes. Do not include request headers,
+ * cookies, or request bodies in the email alert.
  */
+
+export async function register() {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    await import('./sentry.server.config')
+  }
+  if (process.env.NEXT_RUNTIME === 'edge') {
+    await import('./sentry.edge.config')
+  }
+}
 
 // Module-level cooldown. Serverless: this resets on cold start, which is fine —
 // the brief explicitly says a basic in-memory throttle is the right effort here,
@@ -30,6 +37,8 @@ export const onRequestError: Instrumentation.onRequestError = async (err, reques
     // and must not page the operator (this also keeps 404s from alerting).
     const digest = (err as { digest?: unknown })?.digest
     if (typeof digest === 'string' && digest.startsWith('NEXT_')) return
+
+    Sentry.captureRequestError(err, request, context)
 
     // In-memory cooldown. Reserve the slot BEFORE the async send so a burst of
     // concurrent errors can't all get through before the first one records.
