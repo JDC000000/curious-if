@@ -1,33 +1,31 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email: 'joncartwright00@gmail.com',
-      options: {
-        // Never auto-create accounts — only the pre-provisioned curator may log in.
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/admin`,
-      },
-    })
-
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
-    } else {
+    // The server checks the address against its allow-list and sends the link
+    // (security review 2026-09-30); no admin address lives in this bundle.
+    try {
+      const res = await fetch('/auth/admin-link', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!res.ok) throw new Error(String(res.status))
       setSent(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
       setLoading(false)
     }
   }
@@ -102,7 +100,7 @@ export default function AdminLoginPage() {
                 color: '#6B6B6B',
               }}
             >
-              A magic link has been sent to joncartwright00@gmail.com
+              If that is the admin address, a magic link is on its way.
             </p>
           </div>
         ) : (
@@ -116,7 +114,7 @@ export default function AdminLoginPage() {
                 lineHeight: 1.6,
               }}
             >
-              A magic link will be sent to your admin email address.
+              Enter the admin email address to receive a magic link.
             </p>
 
             {error && (
@@ -135,6 +133,32 @@ export default function AdminLoginPage() {
                 {error}
               </div>
             )}
+
+            <label
+              htmlFor="admin-email"
+              style={{ display: 'block', fontFamily: 'var(--font-ui)', fontSize: '14px', color: '#3D3D3D', marginBottom: '8px' }}
+            >
+              Admin email
+            </label>
+            <input
+              id="admin-email"
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                marginBottom: '16px',
+                border: '1px solid #D6D0C4',
+                borderRadius: '8px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '15px',
+                boxSizing: 'border-box',
+              }}
+            />
 
             <button
               type="submit"

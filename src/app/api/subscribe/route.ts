@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendAnswerLiveEmail } from '@/lib/answerLiveEmail'
-import { rateGuard } from '@/lib/rateLimit'
+import { GLOBAL_DAILY_CAPS, globalCapReached, pausedResponse, publicEmailsPaused, rateGuard } from '@/lib/rateLimit'
 import { triggerReciprocalNotification } from '@/lib/reciprocalNotification'
 import { encrypt, encryptEmail, blindIndex } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
@@ -164,6 +164,11 @@ function welcomeEmailHtml(firstName: string | null, unsubscribeUrl: string): str
 }
 
 export async function POST(request: NextRequest) {
+  // Pre-launch cost guard: kill switch + global daily cap across all IPs (Resend contact + email per call).
+  if (publicEmailsPaused() || (await globalCapReached('subscribe', GLOBAL_DAILY_CAPS.subscribe, 86400))) {
+    return pausedResponse('Sign-ups are paused for now. Please try again later.')
+  }
+
   // 3 subscribe attempts per IP per hour
   const limited = await rateGuard(request, 'subscribe', 3, 3600)
   if (limited) return limited
