@@ -25,7 +25,9 @@ export async function register() {
 // Module-level cooldown. Serverless: this resets on cold start, which is fine —
 // the brief explicitly says a basic in-memory throttle is the right effort here,
 // it just needs to not be spammy, not be bulletproof.
-const ALERT_COOLDOWN_MS = 5 * 60 * 1000 // 5 minutes between alert emails
+// 60 min (was 5): Sentry already captures every error; this email is only a backstop, and a public
+// error storm must not drain the Resend quota (security review 2026-09-30).
+const ALERT_COOLDOWN_MS = 60 * 60 * 1000 // 60 minutes between alert emails
 let lastAlertAt = 0
 
 export const onRequestError: Instrumentation.onRequestError = async (err, request, context) => {

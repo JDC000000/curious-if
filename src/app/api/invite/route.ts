@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { blindIndex, encryptEmail, hashToken } from '@/lib/crypto'
 import { signUnsubscribeToken } from '@/lib/unsubscribeToken'
 import { escapeHtml } from '@/lib/escapeHtml'
-import { rateGuard } from '@/lib/rateLimit'
+import { GLOBAL_DAILY_CAPS, globalCapReached, pausedResponse, publicEmailsPaused, rateGuard } from '@/lib/rateLimit'
 
 async function sendInviteEmail({
   nomineeEmail,
@@ -145,6 +145,11 @@ ${unsubscribeUrl}`
 }
 
 export async function POST(request: NextRequest) {
+  // Pre-launch cost guard: kill switch + global daily cap across all IPs (sends email to any address).
+  if (publicEmailsPaused() || (await globalCapReached('invite', GLOBAL_DAILY_CAPS.invite, 86400))) {
+    return pausedResponse('Invites are paused for now. Please try again later.')
+  }
+
   // 1 invite per IP per 5 minutes
   const limited = await rateGuard(request, 'invite', 1, 300)
   if (limited) return limited

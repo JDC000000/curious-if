@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'edge'
 
@@ -40,13 +40,16 @@ export async function GET(
   { params }: { params: Promise<{ answerId: string }> }
 ) {
   const { answerId } = await params
+  // Pre-launch cost guard (security review 2026-09-30): random ids used to force an uncached
+  // edge render + 2 Supabase reads each. Reject non-UUIDs before any DB call or render.
+  if (!UUID.test(answerId)) return new NextResponse('Not found', { status: 404 })
   const data = await getAnswerData(answerId)
 
   if (!data) {
     // Return a branded fallback OG image
     return new ImageResponse(
       <FallbackCard />,
-      { width: 1200, height: 630 }
+      { width: 1200, height: 630, headers: { 'Cache-Control': CACHE } }
     )
   }
 
@@ -68,9 +71,14 @@ export async function GET(
       monthLabel={monthLabel}
       accentColour={question.accent_colour ?? '#3D5A8C'}
     />,
-    { width: 1200, height: 630 }
+    { width: 1200, height: 630, headers: { 'Cache-Control': CACHE } }
   )
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// CDN-cache each card for an hour (serve stale for a day while revalidating), so crawlers and
+// share previews re-hitting the same answer don't re-render it every time.
+const CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400'
 
 // POST from moderate route — fire-and-forget cache warm
 export async function POST(
